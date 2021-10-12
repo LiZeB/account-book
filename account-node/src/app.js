@@ -15,7 +15,6 @@ client.connect(function (err) {
   if (err) throw err
   console.log("成功连接到MongoDB服务器！")
   const db = client.db(dbName);
-  const collection = db.collection('OriginalData');
   client.close();
 });
 
