@@ -37,7 +37,7 @@ export default {
   name: "AccountTable",
   filters: {
     columnFilter: (value, prop) => {
-      if (prop === "isSpecial" && !value) {
+      if (prop === "isSpecial" && isBoolean(value)) {
         return value ? "是" : "否";
       }
       return value;
