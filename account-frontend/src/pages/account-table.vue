@@ -12,6 +12,7 @@
           :label="item.label"
           :prop="item.value"
         >
+          <template slot-scope="{ row }">{{row[item.value] | columnFilter(item.value) | deVal}}</template>
         </el-table-column>
       </el-table>
       <div class="account-table__footer">
@@ -24,14 +25,24 @@
           :total="total"
           layout="total, sizes, prev, pager, next, jumper"
         />
-    </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import { queryOriginalData } from "@/api/account-table.js";
+
 export default {
   name: "AccountTable",
+  filters: {
+    columnFilter: (value, prop) => {
+      if (prop === "isSpecial" && !value) {
+        return value ? "是" : "否";
+      }
+      return value;
+    }
+  },
   data() {
     return {
       tableColumns: [
@@ -41,7 +52,7 @@ export default {
         { label: "开销日期", value: "consumeTime" },
         { label: "开销人", value: "consumer" },
         { label: "是否为特殊项", value: "isSpecial" },
-        { label: "备注", value: "remark" },
+        { label: "备注", value: "remark" }
       ],
       accountData: [],
       pager: {
@@ -51,16 +62,32 @@ export default {
       total: 0
     };
   },
+  mounted() {
+    this.getAccountData();
+  },
   methods: {
     pageSizeChange(pageSize) {
       this.pager.pageSize = pageSize;
+      this.getAccountData();
     },
     pageNoChange(pageNo) {
       this.pager.pageNo = pageNo;
+      this.getAccountData();
     },
     getAccountData() {
-      this.accountData = [];
-    }
+      const params = {
+        pageNum: this.pager.pageNo,
+        pageSize: this.pager.pageSize
+      };
+      queryOriginalData(params)
+        .then(res => {
+          this.accountData = res.data.data;
+          this.total = res.data.total;
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    },
   }
 };
 </script>

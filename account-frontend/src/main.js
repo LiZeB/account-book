@@ -8,6 +8,11 @@ Vue.use(ElementUI);
 
 Vue.config.productionTip = false
 
+import {
+  deVal
+} from '@/utils/common';
+Vue.filter('deVal', deVal);
+
 new Vue({
   router,
   render: h => h(App),

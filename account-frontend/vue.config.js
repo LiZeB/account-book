@@ -1,6 +1,6 @@
 const path = require('path');
 
-module.exports =  {
+module.exports = {
   configureWebpack: {
     resolve: {
       alias: {
@@ -8,4 +8,16 @@ module.exports =  {
       }
     }
   },
+  devServer: {
+    proxy: {
+      '/account-web': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: true,
+        ws: true,
+        pathRewrite: {
+          '^/account-web': '/'
+        }
+      }
+    }
+  }
 }
