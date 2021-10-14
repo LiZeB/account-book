@@ -125,7 +125,7 @@ export default {
         return value ? "是" : "否";
       }
       if (prop === "consumeType" && value) {
-        return value == "1" ? "休闲娱乐" : "日用百货";
+        return value == "1" ? "休闲娱乐" : "日用百货";  //TODO: 需要新增开销类型的字典项接口
       }
       return value;
     }
