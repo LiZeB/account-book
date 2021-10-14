@@ -2,14 +2,13 @@ const APIs = importAllModule(require.context('../api', true, /\.api.js$/), /\.ap
 
 // TODO: 后续要加上http的封装，请求和响应拦截器
 import axios from "axios";
-console.log(process)
 export default (path, params) => {
   const pathArr = path.split('/')
   pathArr.shift()
   const moduleName = pathArr[0]
   const interfaceName = pathArr[1]
 
-  return new Proxy(APIs[moduleName], {
+  const proxy = new Proxy(APIs[moduleName], {
     get(target) {
       const { method, url } = target[interfaceName]
 
@@ -22,6 +21,8 @@ export default (path, params) => {
       }
     }
   })
+
+  return proxy.Promise
 }
 
 function importAllModule(context, reg) {

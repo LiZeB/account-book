@@ -10,16 +10,7 @@ export default {
   data() {
     return {
       dics: {
-        consumeTypes: [
-          {
-            value: '0',
-            label: '生活用品'
-          },
-          {
-            value: '1',
-            label: '休闲娱乐'
-          }
-        ]
+        consumeTypes: []
       }
     }
   },
@@ -29,7 +20,6 @@ export default {
     }
   },
   mounted() {
-    console.log(process.env.VUE_APP_API_PREFIX)
     this.getConsumeTypes();
   },
   methods: {
@@ -39,7 +29,7 @@ export default {
       };
       this.$HTTP("/Dic/queryConsumeTypes", params)
         .then((res) => {
-          this.dics['consumeTypes'] = res.data;
+          this.dics['consumeTypes'] = res.data.data;
         })
         .catch((err) => {
           console.log(err);

@@ -2,11 +2,6 @@ const express = require('express')
 const router = express.Router()
 
 const dicData = require('../model/dic-data.js')
-
-dicData.deleteMany({}, function (err) {
-  console.log(err);
-});
-
 // 将字典项写入数据库
 const dics = {
   consumeTypes: {  // 开销类型
@@ -14,7 +9,9 @@ const dics = {
     '2': '日用百货'
   }
 }
-
+dicData.deleteMany({}, function (err) {
+  console.log(err);
+});
 Object.keys(dics).forEach((key) => {
   dicData.create({
     dicName: key,
@@ -26,7 +23,7 @@ Object.keys(dics).forEach((key) => {
 router.get("/consumeTypes", (req, res, next) => {
   dicData.findOne({ dicName: req.query.name }).then((_data) => {
     const data = JSON.parse(_data.dicObjStr)
-    res.send({
+    res.json({
       type: 0,
       data,
     });

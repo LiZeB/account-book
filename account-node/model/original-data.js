@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const OriginalDataSchema = new Schema({
-  consumeType: { type: Number },  // 开销类型
+  consumeType: { type: String },  // 开销类型
   consumeName: { type: String },  // 开销名称
   consumeSum: { type: Number },  // 开销金额
   consumeTime: { type: String },  // 开销日期
