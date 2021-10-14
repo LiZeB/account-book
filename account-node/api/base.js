@@ -25,8 +25,8 @@ router.post('/create', (req, res, next) => {
   OriginalData.create({
     ...result
   }).then(() => {
-    res.json({
-      ...result
+    res.send({
+      type: 0,
     });
   }).catch(err => {
     console.log("err===", err);
