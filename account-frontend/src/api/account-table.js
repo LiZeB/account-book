@@ -6,3 +6,17 @@ export function queryOriginalData(params) {
     params,
   });
 }
+
+export function saveOriginalData(data) {
+  return axios.post("/account-web/base/create", data);
+}
+
+export function deleteOriginalData(params) {
+  return axios.get("/account-web/base/delete", {
+    params,
+  });
+}
+
+export function editOriginalData(data) {
+  return axios.post("/account-web/base/edit", data);
+}
