@@ -245,6 +245,7 @@ export default {
         pageNum: this.pager.pageNo,
         pageSize: this.pager.pageSize
       };
+      // this.$http('/AccountTable/queryOriginalData', params)
       queryOriginalData(params)
         .then(res => {
           this.accountData = res.data.data;
