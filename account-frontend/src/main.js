@@ -8,8 +8,8 @@ Vue.use(ElementUI);
 
 Vue.config.productionTip = false
 
-import $http from "@/api/index.js";
-Vue.prototype.$http = $http;
+import $HTTP from "@/api/index.js";
+Vue.prototype.$HTTP = $HTTP;
 
 import {
   deVal

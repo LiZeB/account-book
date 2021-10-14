@@ -2,10 +2,10 @@
   <div class="account-table__wrapper">
     <div class="account-table__header">
       <el-button type="primary" @click="handleAdd">添加</el-button>
-      <el-button type="warning">刪除</el-button>
+      <el-button type="danger">刪除</el-button>
     </div>
     <div class="account-table__container">
-      <el-table :data="accountData" border style="width: 100%">
+      <el-table :data="accountData" border>
         <el-table-column
           v-for="item in tableColumns"
           :key="item.value"
@@ -20,7 +20,7 @@
         <el-table-column label="操作" fixed="right" width="100">
           <template>
             <el-link type="primary">编辑</el-link>
-            <el-link type="primary">删除</el-link>
+            <el-link type="danger">删除</el-link>
           </template>
         </el-table-column>
       </el-table>
@@ -44,12 +44,11 @@
         ref="form"
         label-width="100px"
         class="form"
-        label-position="top"
+        label-position="left"
       >
         <el-form-item label="开销类型" prop="consumeType">
           <el-select v-model="form.consumeType" placeholder="请选择">
-            <el-option label="区域一" value="shanghai"></el-option>
-            <el-option label="区域二" value="beijing"></el-option>
+            <el-option v-for="item in $DIC.consumeTypes" :key="item.value" :label="item.label" :value="item.value"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="开销名称" prop="consumeName">
@@ -63,14 +62,16 @@
             type="date"
             placeholder="选择日期"
             v-model="form.consumeTime"
+            format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd"
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="开销人" prop="consumer">
           <el-input v-model="form.consumer"></el-input>
         </el-form-item>
         <el-form-item label="是否为特殊项">
-          <el-radio v-model="radio" label="1">备选项</el-radio>
-          <el-radio v-model="radio" label="2">备选项</el-radio>
+          <el-radio v-model="form.isSpecial" label="1">是</el-radio>
+          <el-radio v-model="form.isSpecial" label="0">否</el-radio>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
@@ -92,7 +93,7 @@
 </template>
 
 <script>
-import { queryOriginalData } from "@/api/account-table.js";
+// import { queryOriginalData } from "@/api/account-table.js";
 const _ = require("lodash");
 const tableColumns = [
   { type: "selection" },
@@ -115,6 +116,7 @@ export default {
       return value;
     },
   },
+  inject: ['$DIC'],
   data() {
     return {
       tableColumns: Object.freeze(tableColumns),
@@ -125,7 +127,15 @@ export default {
       },
       total: 0,
       dialogVisible: false,
-      form: {},
+      form: {
+        consumeType: '',
+        consumeName: '',
+        consumeSum: '',
+        consumeTime: '',
+        consumer: '',
+        isSpecial: '0',
+        remark: ''
+      },
       rules: {},
     };
   },
@@ -149,8 +159,8 @@ export default {
         pageNum: this.pager.pageNo,
         pageSize: this.pager.pageSize,
       };
-      // this.$http('/AccountTable/queryOriginalData', params)
-      queryOriginalData(params)
+      this.$HTTP('/AccountTable/queryOriginalData', params)
+      // queryOriginalData(params)
         .then((res) => {
           this.accountData = res.data.data;
           this.total = res.data.total;
@@ -185,6 +195,7 @@ export default {
     height: calc(100% - 112px);
     .el-table {
       height: 100%;
+      width: 100%;
     }
   }
   .account-table__footer {

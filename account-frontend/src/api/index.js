@@ -2,6 +2,7 @@ const APIs = importAllModule(require.context('../api', true, /\.api.js$/), /\.ap
 
 // TODO: 后续要加上http的封装，请求和响应拦截器
 import axios from "axios";
+console.log(process)
 export default (path, params) => {
   const pathArr = path.split('/')
   pathArr.shift()
@@ -12,7 +13,7 @@ export default (path, params) => {
     get(target) {
       const { method, url } = target[interfaceName]
 
-      let completeUrl = `${process.env.VUE_APP_API_PREFIX}/${url}`
+      let completeUrl = `/account-web${url}`
       switch (method) {
         case 'GET': 
           return axios.get(completeUrl, {params})

@@ -23,12 +23,16 @@ mongoose.connect(dbUrl+dbName);
 const connection = mongoose.connection;
 connection.on("error", console.error.bind(console, "数据库连接错误！"))
 
-const baseRoutes = require('../api/base');
 const express = require('express');
 const app = express();
 app.use(express.json()); // express.json 解析 JSON 格式的请求体数据（有兼容性，仅在 4.16.0+ 版本中可用）
 app.use(express.urlencoded());
+
+const baseRoutes = require('../api/base');
 app.use('/base', baseRoutes);
+const apiRoutes = require("../api/dic")
+app.use('/dic', apiRoutes);
+
 app.use((err, req, res, next) => {
   if (err) {
     res.status(500).json({
