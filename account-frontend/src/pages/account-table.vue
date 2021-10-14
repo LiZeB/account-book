@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { queryOriginalData } from "@/api/account-table.js";
+// import { queryOriginalData } from "@/api/account-table.js";
 
 export default {
   name: "AccountTable",
@@ -59,7 +59,7 @@ export default {
         pageNo: 1,
         pageSize: 10
       },
-      total: 0
+      total: 0,
     };
   },
   mounted() {
@@ -79,6 +79,7 @@ export default {
         pageNum: this.pager.pageNo,
         pageSize: this.pager.pageSize
       };
+      // this.$http('/AccountTable/queryOriginalData', params)
       queryOriginalData(params)
         .then(res => {
           this.accountData = res.data.data;
