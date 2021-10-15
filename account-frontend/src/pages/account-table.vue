@@ -86,14 +86,14 @@
       :title="dialogTitle"
       :visible.sync="dialogVisible"
       width="30%"
-      top="15vh"
+      top="5vh"
       class="dialog"
     >
       <el-form
         :model="addForm"
         :rules="addRules"
         ref="dialogForm"
-        label-width="100px"
+        label-width="120px"
         class="form"
         label-position="left"
       >
@@ -110,7 +110,7 @@
         <el-form-item label="开销名称" prop="consumeName">
           <el-input v-model="addForm.consumeName"></el-input>
         </el-form-item>
-        <el-form-item label="开销金额" prop="consumeSum">
+        <el-form-item label="开销金额（元）" prop="consumeSum">
           <el-input v-model="addForm.consumeSum"></el-input>
         </el-form-item>
         <el-form-item label="开销日期" prop="consumeTime">
@@ -159,7 +159,7 @@ const _ = require("lodash");
 const tableColumns = [
   { label: "开销类型", value: "consumeType" },
   { label: "开销名称", value: "consumeName" },
-  { label: "开销金额", value: "consumeSum" },
+  { label: "开销金额（元）", value: "consumeSum" },
   { label: "开销日期", value: "consumeTime" },
   { label: "开销人", value: "consumer" },
   { label: "是否为特殊项", value: "isSpecial" },
@@ -175,7 +175,7 @@ export default {
         return value ? "是" : "否";
       }
       if (prop === "consumeType" && value) {
-        return vm.$DIC['consumeTypes'][value];
+        return vm.$DIC["consumeTypes"][value];
       }
       return value;
     },
@@ -195,7 +195,7 @@ export default {
         consumeType: "",
         consumeTime: [
           moment().startOf("week").format("YYYY-MM-DD"),
-          moment().endOf("week").format("YYYY-MM-DD")
+          moment().endOf("week").format("YYYY-MM-DD"),
         ],
         consumer: "",
       },
@@ -221,7 +221,10 @@ export default {
     handleReset() {
       this.form = {
         consumeType: "",
-        consumeTime: "",
+        consumeTime: [
+          moment().startOf("week").format("YYYY-MM-DD"),
+          moment().endOf("week").format("YYYY-MM-DD"),
+        ],
         consumer: "",
       };
       this.getAccountData();
@@ -265,7 +268,7 @@ export default {
         });
     },
     handleEdit(data) {
-      this.addForm = {...data};
+      this.addForm = { ...data };
       this.dialogVisible = true;
       this.dialogTitle = "编辑";
     },

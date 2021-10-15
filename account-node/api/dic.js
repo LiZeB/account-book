@@ -9,13 +9,17 @@ const dics = {
     '2': '日用百货'
   }
 }
-dicData.deleteMany({}, function (err) {
-  console.log(err);
-});
 Object.keys(dics).forEach((key) => {
-  dicData.create({
+  dicData.find({
     dicName: key,
     dicObjStr: JSON.stringify(dics[key])
+  }).then(data => {
+    if (!data || !data.length) {
+      dicData.create({
+        dicName: key,
+        dicObjStr: JSON.stringify(dics[key])
+      });
+    }
   })
 })
 
