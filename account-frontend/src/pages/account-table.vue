@@ -22,7 +22,7 @@
         </el-form-item>
         <el-form-item label="开销日期" prop="consumeTime">
           <el-date-picker
-            type="date"
+            type="daterange"
             placeholder="选择日期"
             v-model="form.consumeTime"
             format="yyyy-MM-dd"
@@ -86,7 +86,7 @@
       :title="dialogTitle"
       :visible.sync="dialogVisible"
       width="30%"
-      top="2.6vh"
+      top="15vh"
       class="dialog"
     >
       <el-form
@@ -153,7 +153,9 @@ import {
   deleteOriginalData,
   editOriginalData,
 } from "@/api/account-table.js";
+import moment from "moment";
 const _ = require("lodash");
+
 const tableColumns = [
   { label: "开销类型", value: "consumeType" },
   { label: "开销名称", value: "consumeName" },
@@ -163,6 +165,7 @@ const tableColumns = [
   { label: "是否为特殊项", value: "isSpecial" },
   { label: "备注", value: "remark" },
 ];
+
 export default {
   name: "AccountTable",
   inject: ["$DIC"],
@@ -190,7 +193,10 @@ export default {
       dialogVisible: false,
       form: {
         consumeType: "",
-        consumeTime: "",
+        consumeTime: [
+          moment().startOf("week").format("YYYY-MM-DD"),
+          moment().endOf("week").format("YYYY-MM-DD")
+        ],
         consumer: "",
       },
       addForm: {
@@ -259,15 +265,15 @@ export default {
         });
     },
     handleEdit(data) {
-      this.form = data;
+      this.addForm = {...data};
       this.dialogVisible = true;
       this.dialogTitle = "编辑";
     },
     handleSave() {
       const data = {
-        ...this.form,
+        ...this.addForm,
       };
-      const func = this.form.id ? editOriginalData : saveOriginalData;
+      const func = this.addForm.id ? editOriginalData : saveOriginalData;
       func(data).then(() => {
         this.getAccountData();
         this.$message({
@@ -275,7 +281,7 @@ export default {
           type: "success",
         });
         this.dialogVisible = false;
-        this.form = {};
+        this.addForm = {};
       });
     },
     handleCancel() {
@@ -283,7 +289,7 @@ export default {
       this.dialogVisible = false;
     },
     resetForm() {
-      this.form = {
+      this.addForm = {
         consumeType: "",
         consumeName: "",
         consumeSum: "",
@@ -324,15 +330,6 @@ export default {
   },
 };
 </script>
-<style lang="scss">
-.dialog {
-  .form {
-    .el-form-item {
-      margin-bottom: 5px;
-    }
-  }
-}
-</style>
 
 <style lang="scss" scoped>
 .account-table__wrapper {
