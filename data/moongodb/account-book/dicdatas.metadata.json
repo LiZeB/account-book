@@ -1,1 +1,1 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"fdc267c8985442408df6e39ab610f54e","collectionName":"dicdatas"}
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"12413fdb671f4598b10b10e5b03737a4","collectionName":"dicdatas"}
