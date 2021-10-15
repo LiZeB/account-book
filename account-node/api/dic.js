@@ -4,9 +4,16 @@ const router = express.Router()
 const dicData = require('../model/dic-data.js')
 // 将字典项写入数据库
 const dics = {
-  consumeTypes: {  // 开销类型
+  // 开销类型
+  consumeTypes: {
     '1': '休闲娱乐',
-    '2': '日用百货'
+    '2': '日用百货',
+    '3': '餐饮美食',
+    '4': '水果零食',
+    '5': '旅游出行',
+    '6': '服饰装扮',
+    '7': '亲友长辈',
+    '-1': '其他',
   }
 }
 Object.keys(dics).forEach((key) => {

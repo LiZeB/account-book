@@ -46,6 +46,8 @@
       <el-table
         :data="accountData"
         border
+        height="100%"
+        max-height="100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection"></el-table-column>
@@ -362,9 +364,8 @@ export default {
     }
   }
   .account-table__container {
-    height: calc(100% - 112px);
+    height: calc(100% - 168px);
     .el-table {
-      height: 100%;
       width: 100%;
     }
   }
