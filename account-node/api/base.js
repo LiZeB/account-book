@@ -77,11 +77,11 @@ router.get('/delete', (req, res, next) => {
 });
 
 // 4. 查询所有原始数据
-router.get("/list", (req, res, next) => {
-  const pageNum = Number(req.query.pageNum) || 1;
-  const pageSize = Number(req.query.pageSize) || 20;
+router.post("/list", (req, res, next) => {
+  const qurey = req.body;
+    
 
-  const p1 = OriginalData.find().skip((pageNum - 1) * pageSize).limit(pageSize);
+  const p1 = OriginalData.find({...query}).skip((pageNum - 1) * pageSize).limit(pageSize);
   const p2 = OriginalData.count();
   Promise.all([p1, p2]).then((_data) => {
     const result = _data[0];

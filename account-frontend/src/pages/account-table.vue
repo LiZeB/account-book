@@ -1,9 +1,5 @@
 <template>
   <div class="account-table__wrapper">
-    <div class="account-table__operate">
-      <el-button type="primary" @click="handleAdd">添加</el-button>
-      <el-button type="danger" @click="handleMultiDelete">刪除</el-button>
-    </div>
     <div class="account-table__filter">
       <el-form
         :model="form"
@@ -24,12 +20,6 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="开销名称" prop="consumeName">
-          <el-input v-model="form.consumeName"></el-input>
-        </el-form-item>
-        <el-form-item label="开销金额" prop="consumeSum">
-          <el-input v-model="form.consumeSum"></el-input>
-        </el-form-item>
         <el-form-item label="开销日期" prop="consumeTime">
           <el-date-picker
             type="date"
@@ -42,11 +32,15 @@
         <el-form-item label="开销人" prop="consumer">
           <el-input v-model="form.consumer"></el-input>
         </el-form-item>
-        <el-form-item label="是否为特殊项" prop="isSpecial">
-          <el-radio v-model="form.isSpecial" :label="true">是</el-radio>
-          <el-radio v-model="form.isSpecial" :label="false">否</el-radio>
+        <el-form-item>
+          <el-button type="primary" @click="getAccountData">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
+    </div>
+    <div class="account-table__operate">
+      <el-button type="primary" @click="handleAdd">添加</el-button>
+      <el-button type="danger" @click="handleMultiDelete">刪除</el-button>
     </div>
     <div class="account-table__container">
       <el-table
@@ -96,15 +90,15 @@
       class="dialog"
     >
       <el-form
-        :model="form"
-        :rules="rules"
+        :model="addForm"
+        :rules="addRules"
         ref="dialogForm"
         label-width="100px"
         class="form"
         label-position="left"
       >
         <el-form-item label="开销类型" prop="consumeType">
-          <el-select v-model="form.consumeType" placeholder="请选择">
+          <el-select v-model="addForm.consumeType" placeholder="请选择">
             <el-option
               v-for="(label, value) in $DIC.consumeTypes"
               :key="value"
@@ -114,33 +108,33 @@
           </el-select>
         </el-form-item>
         <el-form-item label="开销名称" prop="consumeName">
-          <el-input v-model="form.consumeName"></el-input>
+          <el-input v-model="addForm.consumeName"></el-input>
         </el-form-item>
         <el-form-item label="开销金额" prop="consumeSum">
-          <el-input v-model="form.consumeSum"></el-input>
+          <el-input v-model="addForm.consumeSum"></el-input>
         </el-form-item>
         <el-form-item label="开销日期" prop="consumeTime">
           <el-date-picker
             type="date"
             placeholder="选择日期"
-            v-model="form.consumeTime"
+            v-model="addForm.consumeTime"
             format="yyyy-MM-dd"
             value-format="yyyy-MM-dd"
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="开销人" prop="consumer">
-          <el-input v-model="form.consumer"></el-input>
+          <el-input v-model="addForm.consumer"></el-input>
         </el-form-item>
         <el-form-item label="是否为特殊项" prop="isSpecial">
-          <el-radio v-model="form.isSpecial" :label="true">是</el-radio>
-          <el-radio v-model="form.isSpecial" :label="false">否</el-radio>
+          <el-radio v-model="addForm.isSpecial" :label="true">是</el-radio>
+          <el-radio v-model="addForm.isSpecial" :label="false">否</el-radio>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             type="textarea"
             :rows="2"
             placeholder="请输入内容"
-            v-model="form.remark"
+            v-model="addForm.remark"
           ></el-input>
         </el-form-item>
       </el-form>
@@ -196,6 +190,11 @@ export default {
       dialogVisible: false,
       form: {
         consumeType: "",
+        consumeTime: "",
+        consumer: "",
+      },
+      addForm: {
+        consumeType: "",
         consumeName: "",
         consumeSum: "",
         consumeTime: "",
@@ -204,6 +203,7 @@ export default {
         remark: "",
       },
       rules: {},
+      addRules: {},
       dialogTitle: "添加",
       selections: [],
     };
@@ -212,6 +212,14 @@ export default {
     this.getAccountData();
   },
   methods: {
+    handleReset() {
+      this.form = {
+        consumeType: "",
+        consumeTime: "",
+        consumer: "",
+      };
+      this.getAccountData();
+    },
     handleSelectionChange(selection) {
       console.log(selection);
       this.selections = selection;
@@ -251,9 +259,7 @@ export default {
         });
     },
     handleEdit(data) {
-      this.form = Object.assign(data, {
-        consumeType: data.consumeType.toString()
-      });
+      this.form = data;
       this.dialogVisible = true;
       this.dialogTitle = "编辑";
     },
@@ -304,6 +310,7 @@ export default {
       const params = {
         pageNum: this.pager.pageNo,
         pageSize: this.pager.pageSize,
+        ...this.form,
       };
       queryOriginalData(params)
         .then((res) => {
@@ -314,9 +321,6 @@ export default {
           console.log(err);
         });
     },
-    filterValue(value, row, column) {
-      return column.filter? row.value === value : row;
-    }
   },
 };
 </script>
