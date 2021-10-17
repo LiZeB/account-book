@@ -53,6 +53,7 @@ body,
 /*外容器*/
 ::-webkit-scrollbar {
   width: 8px;
+  display: none;
 }
 /*滑块*/
 ::-webkit-scrollbar-thumb {

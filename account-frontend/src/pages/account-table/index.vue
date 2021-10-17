@@ -196,8 +196,8 @@ export default {
       form: {
         consumeType: "",
         consumeTime: [
-          moment().startOf("week").format("YYYY-MM-DD"),
-          moment().endOf("week").format("YYYY-MM-DD"),
+          moment().startOf("month").format("YYYY-MM-DD"),
+          moment().endOf("month").format("YYYY-MM-DD"),
         ],
         consumer: "",
       },
@@ -224,8 +224,8 @@ export default {
       this.form = {
         consumeType: "",
         consumeTime: [
-          moment().startOf("week").format("YYYY-MM-DD"),
-          moment().endOf("week").format("YYYY-MM-DD"),
+          moment().startOf("month").format("YYYY-MM-DD"),
+          moment().endOf("month").format("YYYY-MM-DD"),
         ],
         consumer: "",
       };
