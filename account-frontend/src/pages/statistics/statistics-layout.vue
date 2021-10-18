@@ -19,11 +19,9 @@
 export default {
   name: "Statistics-Layout",
   data() {
-    return {
-
-    };
+    return {};
   },
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -33,15 +31,23 @@ export default {
   padding: 8px 10px;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 50% 50%;
-  grid-template-rows: 63px calc(calc(100% - 63px) / 2) calc(calc(100% - 63px) / 2);
+  grid-template-columns: calc(50% - 8px);
+  grid-template-rows: 56px repeat( 2, calc(calc(100% - 72px) / 2) );
+  grid-column-gap: 16px;
+  grid-row-gap: 8px;
+  background: #e5e5e5;
   .filter-form {
     grid-column-start: 1;
     grid-column-end: 3;
+    grid-column-gap: 16px;
   }
   .line-echart {
     grid-row-start: 2;
     grid-row-end: 4;
+  }
+  div:not(:first-child) {
+    background: #ffffff;
+    border-radius: 4px;
   }
 }
 </style>

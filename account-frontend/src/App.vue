@@ -11,12 +11,16 @@ export default {
     return {
       dics: {
         consumeTypes: [],
+        indicatorTypes: [],
+        personNames: []
       },
     };
   },
   provide() {
     return {
       $DIC: this.dics,
+      getIndicatorTypes: this.getIndicatorTypes,
+      getPersonNames: this.getPersonNames
     };
   },
   mounted() {
@@ -35,6 +39,30 @@ export default {
           console.log(err);
         });
     },
+    getIndicatorTypes() {
+      const params = {
+        name: "indicatorTypes",
+      };
+      this.$HTTP("/Dic/queryIndicatorTypes", params)
+        .then((res) => {
+          this.dics["indicatorTypes"] = res.data.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    getPersonNames() {
+      const params = {
+        name: "personNames",
+      };
+      this.$HTTP("/Dic/queryPersonNames", params)
+        .then((res) => {
+          this.dics["personNames"] = res.data.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   },
 };
 </script>

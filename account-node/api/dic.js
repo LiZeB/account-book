@@ -14,6 +14,17 @@ const dics = {
     '6': '服饰装扮',
     '7': '亲友长辈',
     '-1': '其他',
+  },
+  // 统计指标类型
+  indicatorTypes: {
+    '1': '总开销',
+    '2': '平均开销',
+    '3': '特殊开销',
+  },
+  // TODO: 人员暂时写死
+  personNames: {
+    '1': '张雅娴',
+    '2': '李泽滨'
   }
 }
 Object.keys(dics).forEach((key) => {
@@ -42,5 +53,29 @@ router.get("/consumeTypes", (req, res, next) => {
     console.error("/dic/consumeTypes=", err);
   });
 });
+// 2. 查询统计指标类型
+router.get("/indicatorTypes", (req, res, next) => {
+  dicData.findOne({ dicName: req.query.name }).then((_data) => {
+    const data = JSON.parse(_data.dicObjStr)
+    res.json({
+      type: 0,
+      data,
+    });
+  }).catch(err => {
+    console.error("/dic/indicatorTypes=", err);
+  });
+})
+// 3. 查询人员
+router.get("/personNames", (req, res, next) => {
+  dicData.findOne({ dicName: req.query.name }).then((_data) => {
+    const data = JSON.parse(_data.dicObjStr)
+    res.json({
+      type: 0,
+      data,
+    });
+  }).catch(err => {
+    console.error("/dic/personNames=", err);
+  });
+})
 
 module.exports = router
