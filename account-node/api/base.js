@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 
 const OriginalData = require('../model/original-data.js')
+const util = require('../src/util');
 
 const BASE_INFO = [
   "consumeType",
@@ -77,12 +78,26 @@ router.get('/delete', (req, res, next) => {
 });
 
 // 4. 查询所有原始数据
-router.get("/list", (req, res, next) => {
-  const pageNum = Number(req.query.pageNum) || 1;
-  const pageSize = Number(req.query.pageSize) || 20;
+router.post("/list", (req, res, next) => {
+  let query = req.body;
+  const pageNum = query.pageNum;
+  const pageSize = query.pageSize;
+  const consumeTime = query.consumeTime
+  delete query.pageNum;
+  delete query.pageSize;
+  query = util.deletNullQuery(query);
 
-  const p1 = OriginalData.find().skip((pageNum - 1) * pageSize).limit(pageSize);
-  const p2 = OriginalData.count();
+  if (query.hasOwnProperty("consumeTime")) {
+    query.consumeTime = {
+      $gte: consumeTime[0],
+      $lte: consumeTime[1]
+    };
+  }
+
+  const p1 = OriginalData.find({
+    ...query,
+  }).skip((pageNum - 1) * pageSize).limit(pageSize);
+  const p2 = OriginalData.countDocuments({...query});
   Promise.all([p1, p2]).then((_data) => {
     const result = _data[0];
     const count = _data[1];

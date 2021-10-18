@@ -14,14 +14,16 @@ const client = new MongoClient(dbUrl);
 client.connect(function (err) {
   if (err) throw err
   console.log("成功连接到MongoDB服务器！")
-  const db = client.db(dbName);
+  client.db(dbName);
   client.close();
 });
+
 
 // Mongoose连接数据库
 mongoose.connect(dbUrl+dbName);
 const connection = mongoose.connection;
-connection.on("error", console.error.bind(console, "数据库连接错误！"))
+connection.on("error", console.error.bind(console, "数据库连接错误！"));
+
 
 const express = require('express');
 const app = express();

@@ -1,9 +1,5 @@
 <template>
   <div class="account-table__wrapper">
-    <div class="account-table__operate">
-      <el-button type="primary" @click="handleAdd">添加</el-button>
-      <el-button type="danger" @click="handleMultiDelete">刪除</el-button>
-    </div>
     <div class="account-table__filter">
       <el-form
         :model="form"
@@ -24,15 +20,9 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="开销名称" prop="consumeName">
-          <el-input v-model="form.consumeName"></el-input>
-        </el-form-item>
-        <el-form-item label="开销金额" prop="consumeSum">
-          <el-input v-model="form.consumeSum"></el-input>
-        </el-form-item>
         <el-form-item label="开销日期" prop="consumeTime">
           <el-date-picker
-            type="date"
+            type="daterange"
             placeholder="选择日期"
             v-model="form.consumeTime"
             format="yyyy-MM-dd"
@@ -42,16 +32,22 @@
         <el-form-item label="开销人" prop="consumer">
           <el-input v-model="form.consumer"></el-input>
         </el-form-item>
-        <el-form-item label="是否为特殊项" prop="isSpecial">
-          <el-radio v-model="form.isSpecial" :label="true">是</el-radio>
-          <el-radio v-model="form.isSpecial" :label="false">否</el-radio>
+        <el-form-item>
+          <el-button type="primary" @click="getAccountData">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
+    </div>
+    <div class="account-table__operate">
+      <el-button type="primary" @click="handleAdd">添加</el-button>
+      <el-button type="danger" @click="handleMultiDelete">刪除</el-button>
     </div>
     <div class="account-table__container">
       <el-table
         :data="accountData"
         border
+        height="100%"
+        max-height="100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection"></el-table-column>
@@ -92,19 +88,19 @@
       :title="dialogTitle"
       :visible.sync="dialogVisible"
       width="30%"
-      top="2.6vh"
+      top="5vh"
       class="dialog"
     >
       <el-form
-        :model="form"
-        :rules="rules"
+        :model="addForm"
+        :rules="addRules"
         ref="dialogForm"
-        label-width="100px"
+        label-width="120px"
         class="form"
         label-position="left"
       >
         <el-form-item label="开销类型" prop="consumeType">
-          <el-select v-model="form.consumeType" placeholder="请选择">
+          <el-select v-model="addForm.consumeType" placeholder="请选择">
             <el-option
               v-for="(label, value) in $DIC.consumeTypes"
               :key="value"
@@ -114,33 +110,33 @@
           </el-select>
         </el-form-item>
         <el-form-item label="开销名称" prop="consumeName">
-          <el-input v-model="form.consumeName"></el-input>
+          <el-input v-model="addForm.consumeName"></el-input>
         </el-form-item>
-        <el-form-item label="开销金额" prop="consumeSum">
-          <el-input v-model="form.consumeSum"></el-input>
+        <el-form-item label="开销金额（元）" prop="consumeSum">
+          <el-input v-model="addForm.consumeSum"></el-input>
         </el-form-item>
         <el-form-item label="开销日期" prop="consumeTime">
           <el-date-picker
             type="date"
             placeholder="选择日期"
-            v-model="form.consumeTime"
+            v-model="addForm.consumeTime"
             format="yyyy-MM-dd"
             value-format="yyyy-MM-dd"
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="开销人" prop="consumer">
-          <el-input v-model="form.consumer"></el-input>
+          <el-input v-model="addForm.consumer"></el-input>
         </el-form-item>
         <el-form-item label="是否为特殊项" prop="isSpecial">
-          <el-radio v-model="form.isSpecial" :label="true">是</el-radio>
-          <el-radio v-model="form.isSpecial" :label="false">否</el-radio>
+          <el-radio v-model="addForm.isSpecial" :label="true">是</el-radio>
+          <el-radio v-model="addForm.isSpecial" :label="false">否</el-radio>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             type="textarea"
             :rows="2"
             placeholder="请输入内容"
-            v-model="form.remark"
+            v-model="addForm.remark"
           ></el-input>
         </el-form-item>
       </el-form>
@@ -159,16 +155,19 @@ import {
   deleteOriginalData,
   editOriginalData,
 } from "@/api/account-table.js";
+import moment from "moment";
 const _ = require("lodash");
+
 const tableColumns = [
   { label: "开销类型", value: "consumeType" },
   { label: "开销名称", value: "consumeName" },
-  { label: "开销金额", value: "consumeSum" },
+  { label: "开销金额（元）", value: "consumeSum" },
   { label: "开销日期", value: "consumeTime" },
   { label: "开销人", value: "consumer" },
   { label: "是否为特殊项", value: "isSpecial" },
   { label: "备注", value: "remark" },
 ];
+
 export default {
   name: "AccountTable",
   inject: ["$DIC"],
@@ -178,7 +177,7 @@ export default {
         return value ? "是" : "否";
       }
       if (prop === "consumeType" && value) {
-        return vm.$DIC['consumeTypes'][value];
+        return vm.$DIC["consumeTypes"][value];
       }
       return value;
     },
@@ -196,6 +195,14 @@ export default {
       dialogVisible: false,
       form: {
         consumeType: "",
+        consumeTime: [
+          moment().startOf("month").format("YYYY-MM-DD"),
+          moment().endOf("month").format("YYYY-MM-DD"),
+        ],
+        consumer: "",
+      },
+      addForm: {
+        consumeType: "",
         consumeName: "",
         consumeSum: "",
         consumeTime: "",
@@ -204,6 +211,7 @@ export default {
         remark: "",
       },
       rules: {},
+      addRules: {},
       dialogTitle: "添加",
       selections: [],
     };
@@ -212,6 +220,17 @@ export default {
     this.getAccountData();
   },
   methods: {
+    handleReset() {
+      this.form = {
+        consumeType: "",
+        consumeTime: [
+          moment().startOf("month").format("YYYY-MM-DD"),
+          moment().endOf("month").format("YYYY-MM-DD"),
+        ],
+        consumer: "",
+      };
+      this.getAccountData();
+    },
     handleSelectionChange(selection) {
       this.selections = selection;
     },
@@ -250,15 +269,15 @@ export default {
         });
     },
     handleEdit(data) {
-      this.form = data;
+      this.addForm = { ...data };
       this.dialogVisible = true;
       this.dialogTitle = "编辑";
     },
     handleSave() {
       const data = {
-        ...this.form,
+        ...this.addForm,
       };
-      const func = this.form.id ? editOriginalData : saveOriginalData;
+      const func = this.addForm.id ? editOriginalData : saveOriginalData;
       func(data).then(() => {
         this.getAccountData();
         this.$message({
@@ -266,7 +285,7 @@ export default {
           type: "success",
         });
         this.dialogVisible = false;
-        this.form = {};
+        this.addForm = {};
       });
     },
     handleCancel() {
@@ -274,7 +293,7 @@ export default {
       this.dialogVisible = false;
     },
     resetForm() {
-      this.form = {
+      this.addForm = {
         consumeType: "",
         consumeName: "",
         consumeSum: "",
@@ -301,6 +320,7 @@ export default {
       const params = {
         pageNum: this.pager.pageNo,
         pageSize: this.pager.pageSize,
+        ...this.form,
       };
       queryOriginalData(params)
         .then((res) => {
@@ -311,21 +331,9 @@ export default {
           console.log(err);
         });
     },
-    filterValue(value, row, column) {
-      return column.filter? row.value === value : row;
-    }
   },
 };
 </script>
-<style lang="scss">
-.dialog {
-  .form {
-    .el-form-item {
-      margin-bottom: 5px;
-    }
-  }
-}
-</style>
 
 <style lang="scss" scoped>
 .account-table__wrapper {
@@ -355,9 +363,8 @@ export default {
     }
   }
   .account-table__container {
-    height: calc(100% - 112px);
+    height: calc(100% - 168px);
     .el-table {
-      height: 100%;
       width: 100%;
     }
   }

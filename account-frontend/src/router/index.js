@@ -12,7 +12,12 @@ export default new Router({
         {
             path: '/account-table',
             name: 'AccountTable',
-            component: () => import('../pages/account-table.vue'),
+            component: () => import('../pages/account-table/index.vue'),
+        },
+        {
+            path: '/statistics',
+            name: 'statistics',
+            component: () => import('../pages/statistics/index.vue'),
         },
     ],
 })
