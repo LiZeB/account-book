@@ -12,7 +12,7 @@ export default (path, params) => {
     get(target) {
       const { method, url } = target[interfaceName]
 
-      let completeUrl = `/account-web${url}`
+      let completeUrl = `/${process.env.VUE_APP_CONTEXT}${url}`
       switch (method) {
         case 'GET': 
           return axios.get(completeUrl, {params})

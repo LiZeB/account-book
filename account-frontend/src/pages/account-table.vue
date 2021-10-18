@@ -213,7 +213,6 @@ export default {
   },
   methods: {
     handleSelectionChange(selection) {
-      console.log(selection);
       this.selections = selection;
     },
     handleMultiDelete() {
@@ -251,9 +250,7 @@ export default {
         });
     },
     handleEdit(data) {
-      this.form = Object.assign(data, {
-        consumeType: data.consumeType.toString()
-      });
+      this.form = data;
       this.dialogVisible = true;
       this.dialogTitle = "编辑";
     },
