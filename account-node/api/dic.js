@@ -18,7 +18,7 @@ const dics = {
   // 统计指标类型
   indicatorTypes: {
     '1': '总开销',
-    '2': '平均开销',
+    '2': '正常开销',
     '3': '特殊开销',
   },
   // TODO: 人员暂时写死
@@ -27,18 +27,31 @@ const dics = {
     '2': '李泽滨'
   }
 }
-Object.keys(dics).forEach((key) => {
-  dicData.find({
-    dicName: key,
-    dicObjStr: JSON.stringify(dics[key])
-  }).then(data => {
-    if (!data || !data.length) {
+
+dicData.find().exists('_id', true).then((_data) => {
+  const dicNames = Object.keys(dics)
+  if (
+    !_data.length ||
+    _data.length !== dicNames.length ||
+    _data.reduce((pre, cur) => { return pre + cur.dicName }, '') !== dicNames.reduce((pre, cur) => { return pre + cur.dicName }, '')
+  ) {
+    dicData.deleteMany({}).exec()
+    dicNames.forEach((key) => {
       dicData.create({
         dicName: key,
         dicObjStr: JSON.stringify(dics[key])
-      });
-    }
-  })
+      })
+    })
+  } else {
+    _data.forEach((data) => {
+      dicData.findByIdAndUpdate(data._id, {
+        $set: {
+          dicName: data.dicName,
+          dicObjStr: JSON.stringify(dics[data.dicName])
+        }
+      }).exec()
+    })
+  }
 })
 
 // 1. 查询开销类型
@@ -52,7 +65,7 @@ router.get("/consumeTypes", (req, res, next) => {
   }).catch(err => {
     console.error("/dic/consumeTypes=", err);
   });
-});
+})
 // 2. 查询统计指标类型
 router.get("/indicatorTypes", (req, res, next) => {
   dicData.findOne({ dicName: req.query.name }).then((_data) => {
