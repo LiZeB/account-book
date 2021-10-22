@@ -39,6 +39,7 @@
       </el-form>
     </div>
     <div class="account-table__operate">
+      <el-button type="success" @click="handleExport">导入</el-button>
       <el-button type="primary" @click="handleAdd">添加</el-button>
       <el-button type="danger" @click="handleMultiDelete">刪除</el-button>
     </div>
@@ -331,6 +332,9 @@ export default {
           console.log(err);
         });
     },
+    handleExport() {
+      
+    }
   },
 };
 </script>
