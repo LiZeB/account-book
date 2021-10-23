@@ -61,7 +61,7 @@ fs.createReadStream(path.resolve(__dirname, '../csv','2.csv'))
   .on('end', ()=> ws.end())
   
 let zfbArr = [], saveArr = [];
-const FieldDics = {
+const fieldKeys = {
   'inOrOut' : '收/支', // 支出，收入，其他 [退款，转账到银行卡，还花呗，手机充值，账户结息，消费...]
   'dealPerson' : '交易对方',
   'dealAccount' : '对方账号',
@@ -74,6 +74,9 @@ const FieldDics = {
   'dealPersonNumber' : '商家订单号',
   'dealTime' : '交易时间', // 2021/9/5 0:29:02
 }
+const fieldLabels = Object.keys(fieldKeys).reduce((pre, cur)=>{
+  return pre.concat([fieldKeys[cur]]);
+}, []);
 ws.on('finish', ()=> {
   fs.createReadStream(path.resolve(__dirname, '../csv','11.csv'))
     .pipe(csv.parse({ headers: false, ignoreEmpty: true }))
@@ -83,19 +86,20 @@ ws.on('finish', ()=> {
     })
     .on('end', () => {
       for(let i=2; i<zfbArr.length-20; i++) {
-        saveArr = saveArr.concat([
-          Object.keys(FieldDics).reduce((pre, cur, index)=>{
-            let prop = FieldDics[cur], value = zfbArr[i][index].trim();
-            return Object.defineProperty(pre, prop, { value: value });
-          }, {}) 
-        ]);
+        let one = Object.keys(fieldKeys).reduce((pre, cur, index)=>{
+          let prop = fieldKeys[cur], descriptor = { value: zfbArr[i][index].trim(), enumerable: true };
+          return Object.defineProperty(pre, prop, descriptor);
+        }, {})
+        saveArr = saveArr.concat(one);
       }
       
-      // let res = db.collection(collectionName).find({}).count()
-      
-      db.collection(collectionName).insertMany(saveArr, function(err, res) {
-        if (err) throw err;
+      if(!db.collection(collectionName).find().count()){
+        db.collection(collectionName).insertMany(saveArr, function(err) {
+          if (err) throw err;
+          client.close();
+        })
+      } else {
         client.close();
-      })
+      }
     })
 })
