@@ -12,8 +12,10 @@ const iconv = require('iconv-lite');
 
 // 判断文件或文件夹是否存在
 function isFileExist(path) {
-  return fs.exists(path, (isExist) => {
-    return isExist;
+  return new Promise((resolve) => {
+    fs.exists(path, (isExist) => {
+      resolve(isExist);
+    });
   });
 }
 
@@ -24,7 +26,7 @@ router.post("/uploadZfb", (req, res, next) => {
     .on('data', (str) => {
       body += str;
     })
-    .on('end', () => {
+    .on('end', async () => {
       let file = querystring.parse(body, '\r\n', ':');
       let fileInfo = file['Content-Disposition'].split('; ');
 
@@ -53,10 +55,13 @@ router.post("/uploadZfb", (req, res, next) => {
       let binaryData = body.slice(upperIndex, lowerIndex).replace(/^\s\s*/, '').replace(/\s\s*$/, '');
 
       let saveFile = `${fileName}.${ext}`;
-      if( isFileExist(path.resolve(__dirname, `../csv/${saveFile}`)) ){
+      const fileExisted = await isFileExist(path.resolve(__dirname, `../csv/${saveFile}`));
+      if(fileExisted) {
         return;
       }
-      if( !isFileExist(path.resolve(__dirname, '../csv/')) ){
+      
+      const dirExisted = await isFileExist(path.resolve(__dirname, '../csv/'));
+      if(!dirExisted){
         fs.mkdir(path.resolve(__dirname, '../csv/'), (err) => {
           if(err) throw err; 
         });
@@ -91,7 +96,7 @@ router.post("/uploadZfb", (req, res, next) => {
             }).catch(err => {
               console.error("/uploadZfb=", err);
             });
-          })
+          });
     })
   })
 })
