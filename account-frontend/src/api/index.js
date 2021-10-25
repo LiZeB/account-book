@@ -8,6 +8,12 @@ export default (path, params) => {
   const moduleName = pathArr[0]
   const interfaceName = pathArr[1]
 
+  let config = {};
+  if(params && params.config){
+    config = params.config;
+    params = params.params;
+  }
+
   const proxy = new Proxy(APIs[moduleName], {
     get(target) {
       const { method, url } = target[interfaceName]
@@ -15,9 +21,9 @@ export default (path, params) => {
       let completeUrl = `/${process.env.VUE_APP_CONTEXT}${url}`
       switch (method) {
         case 'GET': 
-          return axios.get(completeUrl, {params})
+          return axios.get(completeUrl, { params: params, headers: config })
         case 'POST':
-          return axios.post(completeUrl, params)   
+          return axios.post(completeUrl, params, config)   
       }
     }
   })

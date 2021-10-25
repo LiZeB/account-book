@@ -19,5 +19,10 @@ export default new Router({
             name: 'statistics',
             component: () => import('../pages/statistics/index.vue'),
         },
+        {
+            path: '/upload',
+            name: 'upload',
+            component: () => import('../pages/upload/index.vue'),
+        }
     ],
 })
