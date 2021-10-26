@@ -22,6 +22,7 @@ const ZfbDataSchema = new Schema({
   dealStatus: { type: String }, 
   dealType: { type: String }, 
   dealTime: { type: String }, 
+  file: { type: String}
 });
 
 const ZfbData = mongoose.model('ZfbData', ZfbDataSchema)

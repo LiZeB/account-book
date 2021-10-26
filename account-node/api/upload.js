@@ -10,6 +10,17 @@ const path = require('path');
 const csv = require('fast-csv');
 const iconv = require('iconv-lite');
 
+// 获取基础信息
+function getBaseInfo(body, req) {
+  let file = querystring.parse(body, '\r\n', ':');
+
+  let info = {};
+  info['ReqHeader-Content-Type'] = req.headers['content-type'].trim();  
+  info['Content-Type'] = file['Content-Type'].trim();
+  info['Content-Disposition'] = file['Content-Disposition'].trim();
+  
+  return info;
+}
 // 判断文件或文件夹是否存在
 function isFileExist(path) {
   return new Promise((resolve) => {
@@ -17,6 +28,89 @@ function isFileExist(path) {
       resolve(isExist);
     });
   });
+}
+// 获取文件名称
+function getFileName(info) {
+  let fileInfo = info['Content-Disposition'].split('; '); // file['Content-Disposition']=' form-data; name="files"; filename="alipay_record_20211020_191631.csv"'
+
+  for (let value in fileInfo) {
+    if (fileInfo[value].indexOf("filename=") != -1) {
+      return decode(fileInfo[value], 'utf8').slice(10, -1);
+    }
+  }
+}
+// 去掉不必要的边界字符
+function simplifyBody(body, info) {
+  let minIndex = body.indexOf(info['Content-Type']) + info['Content-Type'].length,
+      maxIndex = body.indexOf(`--${info['ReqHeader-Content-Type'].split('; ')[1].replace('boundary=', '')}--`);
+  return body.slice(minIndex, maxIndex);
+}
+// 解决中文乱码
+function decode(data, encoding) {
+  return iconv.decode(data, encoding); // 解决中文乱码
+}
+// 写入流
+function writeStream(data, filePath, encoding) {
+  const ws = fs.createWriteStream(filePath); 
+  ws.write(decode(data, encoding), 'utf8');
+  ws.end();
+}
+// 读取流
+function readStream(filePath) {
+  return new Promise((resolve, reject) => {
+    let readArr = [];
+    fs.createReadStream(filePath)
+      .pipe(csv.parse({ headers: false, ignoreEmpty: true }))
+      .on('error', err => reject(err))
+      .on('data', (row) => {
+        readArr.push(row);
+      })
+      .on('end', () => {
+        resolve(readArr);
+      });
+  })
+  
+}
+// 获取入库数据
+function getSaveData(inputArr, start, end, dataKeys, fileName) {
+  let outputArr = [];
+  let minIndex = start || 0,
+      maxIndex = end || inputArr.length;
+  for (let i=minIndex; i<maxIndex; i++) {
+    let one = Object.keys(dataKeys).reduce((pre, cur, index) => {
+      let prop = cur, descriptor = { value: inputArr[i][index].replace(/¥/, '').trim(), enumerable: true };
+      return Object.defineProperty(pre, prop, descriptor);
+    }, {})
+    Object.defineProperty(one, 'file', { value: fileName, enumerable: true }); // 标识文件来源
+    outputArr = outputArr.concat(one);
+  }
+
+  return outputArr;
+}
+// 数据批量入库
+function saveData(fileName, type, arr) {
+  return new Promise((resolve, reject) => {
+    switch(type){
+      case 'Zfb':
+        ZfbData.find({file: fileName}).then((res) => { // 判断文件内容是否已入库
+          if(!res.length){
+            ZfbData.insertMany(arr).then((data) => {
+              resolve(data)
+            }).catch(err => reject(err));
+          }
+        });
+        break;
+      case 'Wx':
+        WxData.find({file: fileName}).then((res) => {
+          if(!res.length){
+            WxData.insertMany(arr).then((data) => {
+              resolve(data)
+            }).catch(err => reject(err));
+          }
+        });
+        break;
+    }
+  })
 }
 
 // 1. 上传支付宝消费记录
@@ -27,77 +121,34 @@ router.post("/uploadZfb", (req, res, next) => {
       body += str;
     })
     .on('end', async () => {
-      let file = querystring.parse(body, '\r\n', ':');
-      let fileInfo = file['Content-Disposition'].split('; ');
+      const info = getBaseInfo(body, req);
 
-      // 获取文件名称和后缀
-      let fileName = '', ext = '';
-      for (let value in fileInfo) {
-        if (fileInfo[value].indexOf("filename=") != -1) {
-          let str = iconv.decode(fileInfo[value], 'utf8').slice(10, -1);
-          let cutIndex = str.indexOf('.');
-  
-          fileName = str.slice(0, cutIndex);
-          if (fileName.indexOf('\\') != -1) {
-            fileName = fileName.slice(fileName.lastIndexOf('\\') + 1);
-          }
-          
-          ext = str.slice(cutIndex + 1);
-
-          break;
-        }
-      }
-
-      // 去掉不必要的边界字符
-      let boundary = req.headers['content-type'].split('; ')[1].replace('boundary=', '');
-      let upperIndex = body.indexOf(file['Content-Type'].slice(1)) + file['Content-Type'].slice(1).length;
-          lowerIndex = body.indexOf(`--${boundary}--`);
-      let binaryData = body.slice(upperIndex, lowerIndex).replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-
-      let saveFile = `${fileName}.${ext}`;
-      const fileExisted = await isFileExist(path.resolve(__dirname, `../csv/${saveFile}`));
-      if(fileExisted) {
-        return;
-      }
+      const dirName = 'ZfbCsv', fileName = getFileName(info);
+      const dirPath = path.resolve(__dirname, `../${dirName}`), filePath = path.resolve(__dirname, `../${dirName}/${fileName}`);
       
-      const dirExisted = await isFileExist(path.resolve(__dirname, '../csv/'));
+      const dirExisted = await isFileExist(dirPath);
       if(!dirExisted){
-        fs.mkdir(path.resolve(__dirname, '../csv/'), (err) => {
+        fs.mkdir(dirPath, (err) => {
           if(err) throw err; 
         });
       }
 
-      const ws = fs.createWriteStream(path.resolve(__dirname, '../csv', saveFile)); 
-      ws.write(iconv.decode(binaryData, 'gbk'), 'utf8') // 解决中文乱码 
-      ws.end();
+      const binaryData = simplifyBody(body, info);
+      await writeStream(binaryData, filePath, 'gbk');
 
-      let readArr = [], writeArr = [];
-      ws.on('finish', () => {
-        fs.createReadStream(path.resolve(__dirname, '../csv', `${fileName}.${ext}`))
-          .pipe(csv.parse({ headers: false, ignoreEmpty: true }))
-          .on('error', error => console.error(error))
-          .on('data', (row) => {
-            readArr.push(row);
-          })
-          .on('end', () => {
-            for (let i = 2; i < readArr.length-20; i++) {
-              let one = Object.keys(ZfbKeys).reduce((pre, cur, index) => {
-                let prop = cur, descriptor = { value: readArr[i][index].trim(), enumerable: true };
-                return Object.defineProperty(pre, prop, descriptor);
-              }, {})
-              writeArr = writeArr.concat(one);
-            }
-
-            ZfbData.insertMany(writeArr).then((data) => {
+      await readStream(filePath)
+        .then((readArr) => {
+          const writeArr = getSaveData(readArr, 2, readArr.length-20, ZfbKeys, fileName);
+          saveData(fileName, 'Zfb', writeArr)
+            .then(data => {
               res.json({
                 type: 0,
                 data,
               });
-            }).catch(err => {
-              console.error("/uploadZfb=", err);
-            });
-          });
-    })
+            })
+            .catch(err => console.error(err))
+        })
+        .catch(err => console.error(err));
   })
 })
 
@@ -108,75 +159,35 @@ router.post("/uploadWx", (req, res, next) => {
     .on('data', (str) => {
       body += str;
     })
-    .on('end', () => {
-      let file = querystring.parse(body, '\r\n', ':');
-      let fileInfo = file['Content-Disposition'].split('; ');
+    .on('end', async () => {
+      const info = getBaseInfo(body, req);
 
-      // 获取文件名称和后缀
-      let fileName = '', ext = '';
-      for (let value in fileInfo) {
-        if (fileInfo[value].indexOf("filename=") != -1) {
-          let str = iconv.decode(fileInfo[value], 'utf8').slice(10, -1);
-          let cutIndex = str.indexOf('.');
-  
-          fileName = str.slice(0, cutIndex);
-          if (fileName.indexOf('\\') != -1) {
-            fileName = fileName.slice(fileName.lastIndexOf('\\') + 1);
-          }
-          
-          ext = str.slice(cutIndex + 1);
-
-          break;
-        }
-      }
-
-      // 去掉不必要的边界字符
-      let boundary = req.headers['content-type'].split('; ')[1].replace('boundary=', '');
-      let upperIndex = body.indexOf(file['Content-Type'].slice(1)) + file['Content-Type'].slice(1).length;
-          lowerIndex = body.indexOf(`--${boundary}--`);
-      let binaryData = body.slice(upperIndex, lowerIndex).replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-
-      let saveFile = `${fileName}.${ext}`;
-      if( isFileExist(path.resolve(__dirname, `../csv/${saveFile}`)) ){
-        return;
-      }
-      if( !isFileExist(path.resolve(__dirname, '../csv/')) ){
-        fs.mkdir(path.resolve(__dirname, '../csv/'), (err) => {
+      const dirName = 'ZfbCsv', fileName = getFileName(info);
+      const dirPath = path.resolve(__dirname, `../${dirName}`), filePath = path.resolve(__dirname, `../${dirName}/${fileName}`);
+      
+      const dirExisted = await isFileExist(dirPath);
+      if(!dirExisted){
+        fs.mkdir(dirPath, (err) => {
           if(err) throw err; 
         });
       }
 
-      const ws = fs.createWriteStream(path.resolve(__dirname, '../csv', saveFile)); 
-      ws.write(iconv.decode(binaryData, 'utf8'), 'utf8') // 解决中文乱码 
-      ws.end();
+      const binaryData = simplifyBody(body, info);
+      await writeStream(binaryData, filePath, 'utf8');
 
-      let readArr = [], writeArr = [];
-      ws.on('finish', () => {
-        fs.createReadStream(path.resolve(__dirname, '../csv', `${fileName}.${ext}`))
-          .pipe(csv.parse({ headers: false, ignoreEmpty: true }))
-          .on('error', error => console.error(error))
-          .on('data', (row) => {
-            readArr.push(row);
-          })
-          .on('end', () => {
-            for (let i = 15; i < readArr.length; i++) {
-              let one = Object.keys(WxKeys).reduce((pre, cur, index) => {
-                let prop = cur, descriptor = { value: readArr[i][index].replace(/¥/, '').trim(), enumerable: true };
-                return Object.defineProperty(pre, prop, descriptor);
-              }, {})
-              writeArr = writeArr.concat(one);
-            }
-
-            WxData.insertMany(writeArr).then((data) => {
+      await readStream(filePath)
+        .then((readArr) => {
+          const writeArr = getSaveData(readArr, 15, readArr.length, WxKeys, fileName);
+          saveData(fileName, 'Wx', writeArr)
+            .then(data => {
               res.json({
                 type: 0,
                 data,
               });
-            }).catch(err => {
-              console.error("/uploadWx=", err);
-            });
-          })
-    })
+            })
+            .catch(err => console.error(err))
+        })
+        .catch(err => console.error(err));
   })
 })
 

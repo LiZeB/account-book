@@ -19,7 +19,8 @@ const WxDataSchema = new Schema({
   inOrOut: { type: String }, 
   sum: { type: Number },
   account: { type: String }, 
-  dealStatus: { type: String }, 
+  dealStatus: { type: String },
+  file: { type: String}
 });
 
 const WxData = mongoose.model('WxData', WxDataSchema)
