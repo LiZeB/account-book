@@ -10,15 +10,47 @@ const path = require('path');
 const csv = require('fast-csv');
 const iconv = require('iconv-lite');
 
+class UploadFile {
+  constructor() {
+
+  }
+
+  writeStream(data, filePath, encoding) {
+    const ws = fs.createWriteStream(filePath);
+    ws.write(this._decode(data, encoding), 'utf8');
+    ws.end();
+  }
+
+  readStream(filePath) {
+    return new Promise((resolve, reject) => {
+      let readArr = [];
+      fs.createReadStream(filePath)
+        .pipe(csv.parse({ headers: false, ignoreEmpty: true }))
+        .on('error', err => reject(err))
+        .on('data', (row) => {
+          readArr.push(row);
+        })
+        .on('end', () => {
+          resolve(readArr);
+        });
+    })
+  }
+
+  _decode(data, encoding) {
+    return iconv.decode(data, encoding); // 解决中文乱码
+  }
+
+}
+
 // 获取基础信息
 function getBaseInfo(body, req) {
   let file = querystring.parse(body, '\r\n', ':');
 
   let info = {};
-  info['ReqHeader-Content-Type'] = req.headers['content-type'].trim();  
+  info['ReqHeader-Content-Type'] = req.headers['content-type'].trim();
   info['Content-Type'] = file['Content-Type'].trim();
   info['Content-Disposition'] = file['Content-Disposition'].trim();
-  
+
   return info;
 }
 // 判断文件或文件夹是否存在
@@ -42,41 +74,17 @@ function getFileName(info) {
 // 去掉不必要的边界字符
 function simplifyBody(body, info) {
   let minIndex = body.indexOf(info['Content-Type']) + info['Content-Type'].length,
-      maxIndex = body.indexOf(`--${info['ReqHeader-Content-Type'].split('; ')[1].replace('boundary=', '')}--`);
+    maxIndex = body.indexOf(`--${info['ReqHeader-Content-Type'].split('; ')[1].replace('boundary=', '')}--`);
   return body.slice(minIndex, maxIndex);
 }
-// 解决中文乱码
-function decode(data, encoding) {
-  return iconv.decode(data, encoding); // 解决中文乱码
-}
-// 写入流
-function writeStream(data, filePath, encoding) {
-  const ws = fs.createWriteStream(filePath); 
-  ws.write(decode(data, encoding), 'utf8');
-  ws.end();
-}
-// 读取流
-function readStream(filePath) {
-  return new Promise((resolve, reject) => {
-    let readArr = [];
-    fs.createReadStream(filePath)
-      .pipe(csv.parse({ headers: false, ignoreEmpty: true }))
-      .on('error', err => reject(err))
-      .on('data', (row) => {
-        readArr.push(row);
-      })
-      .on('end', () => {
-        resolve(readArr);
-      });
-  })
-  
-}
+
+
 // 获取入库数据
 function getSaveData(inputArr, start, end, dataKeys, fileName) {
   let outputArr = [];
   let minIndex = start || 0,
-      maxIndex = end || inputArr.length;
-  for (let i=minIndex; i<maxIndex; i++) {
+    maxIndex = end || inputArr.length;
+  for (let i = minIndex; i < maxIndex; i++) {
     let one = Object.keys(dataKeys).reduce((pre, cur, index) => {
       let prop = cur, descriptor = { value: inputArr[i][index].replace(/¥/, '').trim(), enumerable: true };
       return Object.defineProperty(pre, prop, descriptor);
@@ -90,10 +98,10 @@ function getSaveData(inputArr, start, end, dataKeys, fileName) {
 // 数据批量入库
 function saveData(fileName, type, arr) {
   return new Promise((resolve, reject) => {
-    switch(type){
+    switch (type) {
       case 'Zfb':
-        ZfbData.find({file: fileName}).then((res) => { // 判断文件内容是否已入库
-          if(!res.length){
+        ZfbData.find({ file: fileName }).then((res) => { // 判断文件内容是否已入库
+          if (!res.length) {
             ZfbData.insertMany(arr).then((data) => {
               resolve(data)
             }).catch(err => reject(err));
@@ -101,8 +109,8 @@ function saveData(fileName, type, arr) {
         });
         break;
       case 'Wx':
-        WxData.find({file: fileName}).then((res) => {
-          if(!res.length){
+        WxData.find({ file: fileName }).then((res) => {
+          if (!res.length) {
             WxData.insertMany(arr).then((data) => {
               resolve(data)
             }).catch(err => reject(err));
@@ -125,11 +133,11 @@ router.post("/uploadZfb", (req, res, next) => {
 
       const dirName = 'ZfbCsv', fileName = getFileName(info);
       const dirPath = path.resolve(__dirname, `../${dirName}`), filePath = path.resolve(__dirname, `../${dirName}/${fileName}`);
-      
+
       const dirExisted = await isFileExist(dirPath);
-      if(!dirExisted){
+      if (!dirExisted) {
         fs.mkdir(dirPath, (err) => {
-          if(err) throw err; 
+          if (err) throw err;
         });
       }
 
@@ -138,7 +146,7 @@ router.post("/uploadZfb", (req, res, next) => {
 
       await readStream(filePath)
         .then((readArr) => {
-          const writeArr = getSaveData(readArr, 2, readArr.length-20, ZfbKeys, fileName);
+          const writeArr = getSaveData(readArr, 2, readArr.length - 20, ZfbKeys, fileName);
           saveData(fileName, 'Zfb', writeArr)
             .then(data => {
               res.json({
@@ -149,7 +157,7 @@ router.post("/uploadZfb", (req, res, next) => {
             .catch(err => console.error(err))
         })
         .catch(err => console.error(err));
-  })
+    })
 })
 
 // 2. 上传微信消费记录
@@ -164,11 +172,11 @@ router.post("/uploadWx", (req, res, next) => {
 
       const dirName = 'ZfbCsv', fileName = getFileName(info);
       const dirPath = path.resolve(__dirname, `../${dirName}`), filePath = path.resolve(__dirname, `../${dirName}/${fileName}`);
-      
+
       const dirExisted = await isFileExist(dirPath);
-      if(!dirExisted){
+      if (!dirExisted) {
         fs.mkdir(dirPath, (err) => {
-          if(err) throw err; 
+          if (err) throw err;
         });
       }
 
@@ -188,7 +196,7 @@ router.post("/uploadWx", (req, res, next) => {
             .catch(err => console.error(err))
         })
         .catch(err => console.error(err));
-  })
+    })
 })
 
 module.exports = router
