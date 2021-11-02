@@ -34,11 +34,10 @@ class ParseData {
     );
     this._type = type.toLowerCase();
     this._encoding = encoding;
-    this.parsedData = [];
 
     this.writeStream(body);
-    this.readStream().then((readArr) => {
-      this.parsedData = this._parseData(readArr);
+    this.parsedData = this.readStream().then((readArr) => {
+      return this._parseData(readArr);
     });
   }
 
@@ -132,9 +131,9 @@ class ParseData {
     return outputArr;
   }
 
-  getParsedData() {
+  async getParsedData() {
     const fileName = this._fileName;
-    const dataArray = this.parsedData;
+    const dataArray = await this.parsedData;
     return {
       fileName,
       dataArray,
