@@ -22,7 +22,8 @@ const ZFBINFO = {
 };
 
 class ParseData {
-  constructor(body, req, type, encoding = "utf-8") {
+  constructor(body, req, type, encoding = "utf8") {
+    this._encoding = encoding;
     this._info = this._getBaseInfo(body, req);
     this._fileName = this._getFileName();
     /**
@@ -33,27 +34,30 @@ class ParseData {
       `../../data/original-data/${this._fileName}`
     );
     this._type = type.toLowerCase();
-    this._encoding = encoding;
-
-    this.writeStream(body);
-    this.parsedData = this.readStream().then((readArr) => {
-      return this._parseData(readArr);
+    this._parseData = [];
+    this._parsedData = this.writeStream(body).then(() => {
+      return this.readStream().then((readArr) => {
+        return this._parseData(readArr);
+      });
     });
   }
 
-  writeStream() {
-    const minIndex =
-      this._body.indexOf(this._info["Content-Type"]) +
-      this._info["Content-Type"].length;
-    const maxIndex = this._body.indexOf(
-      `--${this._info["ReqHeader-Content-Type"]
-        .split("; ")[1]
-        .replace("boundary=", "")}--`
-    );
-    const binaryData = this._body.slice(minIndex, maxIndex);
-    const ws = fs.createWriteStream(this._filePath);
-    ws.write(iconv.decode(binaryData, this._encoding), "utf8");
-    ws.end();
+  writeStream(body, ) {
+    return new Promise((resolve, reject) => {
+      const minIndex =
+        body.indexOf(this._info["Content-Type"]) +
+        this._info["Content-Type"].length;
+      const maxIndex = body.indexOf(
+        `--${this._info["ReqHeader-Content-Type"]
+          .split("; ")[1]
+          .replace("boundary=", "")}--`
+      );
+      const binaryData = body.slice(minIndex, maxIndex);
+      const ws = fs.createWriteStream(this._filePath);
+      ws.write(iconv.decode(binaryData, this._encoding), "utf8");
+      ws.end();
+      ws.on('finish', () => {resolve();});
+    });
   }
 
   readStream() {
@@ -83,10 +87,9 @@ class ParseData {
      */
     const fileInfo = this._info["Content-Disposition"].split("; ");
     const fileNameIndex = fileInfo.findIndex((item) => {
-      item = iconv.decode(data, encoding); // 防止中文乱码
       return item.indexOf("filename=") !== -1;
     });
-    return fileInfo[fileNameIndex].slice(10, -1);
+    return iconv.decode(fileInfo[fileNameIndex].slice(10, -1), this._encoding); // 防止中文乱码
   }
 
   _getBaseInfo(body, req) {
@@ -104,7 +107,7 @@ class ParseData {
       dataKeys;
     if (this._type === "zfb") {
       start = ZFBINFO.startIndex;
-      end = ZFBINFO.endIndex;
+      end += ZFBINFO.endIndex;
       dataKeys = ZFBINFO.infoKeys;
     }
     if (this._type === "wx") {
@@ -123,7 +126,7 @@ class ParseData {
         return Object.defineProperty(pre, prop, descriptor);
       }, {});
       Object.defineProperty(one, "file", {
-        value: fileName,
+        value: this._fileName,
         enumerable: true,
       });
       outputArr = outputArr.concat(one);
@@ -133,7 +136,7 @@ class ParseData {
 
   async getParsedData() {
     const fileName = this._fileName;
-    const dataArray = await this.parsedData;
+    const dataArray = await this._parsedData;
     return {
       fileName,
       dataArray,
@@ -141,6 +144,11 @@ class ParseData {
   }
 }
 
+/**
+ * NOTE
+ * 1. 从客户端上直接下载下来的账单格式是不一致的，支付宝账单格式是 gbk, 微信账单格式是 utf8;
+ * 2. 通过写流在 account-book/data/original-data/ 下备份的账单文件格式都是 utf8;  
+ */
 // 1. 上传支付宝消费记录
 router.post("/uploadZfb", (req, res, next) => {
   let body = "";
@@ -151,7 +159,7 @@ router.post("/uploadZfb", (req, res, next) => {
     })
     .on("end", async () => {
       const zfbParseData = new ParseData(body, req, "zfb", "gbk");
-      const info = zfbParseData.getParsedData();
+      const info = await zfbParseData.getParsedData();
 
       if (info.dataArray.length) {
         ZfbData.find({
@@ -178,8 +186,8 @@ router.post("/uploadWx", (req, res, next) => {
       body += str;
     })
     .on("end", async () => {
-      const wxParseData = new ParseData(body, req, "wx", "utf-8");
-      const info = wxParseData.getParsedData();
+      const wxParseData = new ParseData(body, req, "wx", "utf8");
+      const info = await wxParseData.getParsedData();
 
       if (info.dataArray.length) {
         WxData.find({
