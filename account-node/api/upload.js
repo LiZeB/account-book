@@ -148,6 +148,7 @@ class ParseData {
  * NOTE
  * 1. 从客户端上直接下载下来的账单格式是不一致的，支付宝账单格式是 gbk, 微信账单格式是 utf8;
  * 2. 通过写流在 account-book/data/original-data/ 下备份的账单文件格式都是 utf8;  
+ * 3. 根据原始账单和备份账单的分别，ParseData 类的 encoding 参数是不一样的
  */
 // 1. 上传支付宝消费记录
 router.post("/uploadZfb", (req, res, next) => {
