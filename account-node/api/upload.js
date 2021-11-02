@@ -1,202 +1,201 @@
-const express = require('express')
-const router = express.Router()
-const querystring = require('querystring')
+const express = require("express");
+const router = express.Router();
+const querystring = require("querystring");
 
-const { ZfbKeys, ZfbData } = require('../model/zfb-data.js')
-const { WxKeys, WxData } = require('../model/wx-data.js')
+const { ZfbKeys, ZfbData } = require("../model/zfb-data.js");
+const { WxKeys, WxData } = require("../model/wx-data.js");
 
-const fs = require('fs');
-const path = require('path');
-const csv = require('fast-csv');
-const iconv = require('iconv-lite');
+const fs = require("fs");
+const path = require("path");
+const csv = require("fast-csv");
+const iconv = require("iconv-lite");
 
-class UploadFile {
-  constructor() {
+const WXINFO = {
+  infoKeys: WxKeys,
+  startIndex: 15,
+};
 
+const ZFBINFO = {
+  infoKeys: ZfbKeys,
+  startIndex: 2,
+  endIndex: -20,
+};
+
+class ParseData {
+  constructor(body, req, type, encoding = "utf-8") {
+    this._info = this._getBaseInfo(body, req);
+    this._fileName = this._getFileName();
+    /**
+     * NOTE: 原始账单文件保存在外层的data/original-data/文件夹下
+     */
+    this._filePath = path.resolve(
+      __dirname,
+      `../../data/original-data/${this._fileName}`
+    );
+    this._type = type.toLowerCase();
+    this._encoding = encoding;
+    this.parsedData = [];
+
+    this.writeStream(body);
+    this.readStream().then((readArr) => {
+      this.parsedData = this._parseData(readArr);
+    });
   }
 
-  writeStream(data, filePath, encoding) {
-    const ws = fs.createWriteStream(filePath);
-    ws.write(this._decode(data, encoding), 'utf8');
+  writeStream() {
+    const minIndex =
+      this._body.indexOf(this._info["Content-Type"]) +
+      this._info["Content-Type"].length;
+    const maxIndex = this._body.indexOf(
+      `--${this._info["ReqHeader-Content-Type"]
+        .split("; ")[1]
+        .replace("boundary=", "")}--`
+    );
+    const binaryData = this._body.slice(minIndex, maxIndex);
+    const ws = fs.createWriteStream(this._filePath);
+    ws.write(iconv.decode(binaryData, this._encoding), "utf8");
     ws.end();
   }
 
-  readStream(filePath) {
+  readStream() {
     return new Promise((resolve, reject) => {
       let readArr = [];
-      fs.createReadStream(filePath)
-        .pipe(csv.parse({ headers: false, ignoreEmpty: true }))
-        .on('error', err => reject(err))
-        .on('data', (row) => {
+      fs.createReadStream(this._filePath)
+        .pipe(
+          csv.parse({
+            headers: false,
+            ignoreEmpty: true,
+          })
+        )
+        .on("error", (err) => reject(err))
+        .on("data", (row) => {
           readArr.push(row);
         })
-        .on('end', () => {
+        .on("end", () => {
           resolve(readArr);
         });
-    })
-  }
-
-  _decode(data, encoding) {
-    return iconv.decode(data, encoding); // 解决中文乱码
-  }
-
-}
-
-// 获取基础信息
-function getBaseInfo(body, req) {
-  let file = querystring.parse(body, '\r\n', ':');
-
-  let info = {};
-  info['ReqHeader-Content-Type'] = req.headers['content-type'].trim();
-  info['Content-Type'] = file['Content-Type'].trim();
-  info['Content-Disposition'] = file['Content-Disposition'].trim();
-
-  return info;
-}
-// 判断文件或文件夹是否存在
-function isFileExist(path) {
-  return new Promise((resolve) => {
-    fs.exists(path, (isExist) => {
-      resolve(isExist);
     });
-  });
-}
-// 获取文件名称
-function getFileName(info) {
-  let fileInfo = info['Content-Disposition'].split('; '); // file['Content-Disposition']=' form-data; name="files"; filename="alipay_record_20211020_191631.csv"'
-
-  for (let value in fileInfo) {
-    if (fileInfo[value].indexOf("filename=") != -1) {
-      return decode(fileInfo[value], 'utf8').slice(10, -1);
-    }
-  }
-}
-// 去掉不必要的边界字符
-function simplifyBody(body, info) {
-  let minIndex = body.indexOf(info['Content-Type']) + info['Content-Type'].length,
-    maxIndex = body.indexOf(`--${info['ReqHeader-Content-Type'].split('; ')[1].replace('boundary=', '')}--`);
-  return body.slice(minIndex, maxIndex);
-}
-
-
-// 获取入库数据
-function getSaveData(inputArr, start, end, dataKeys, fileName) {
-  let outputArr = [];
-  let minIndex = start || 0,
-    maxIndex = end || inputArr.length;
-  for (let i = minIndex; i < maxIndex; i++) {
-    let one = Object.keys(dataKeys).reduce((pre, cur, index) => {
-      let prop = cur, descriptor = { value: inputArr[i][index].replace(/¥/, '').trim(), enumerable: true };
-      return Object.defineProperty(pre, prop, descriptor);
-    }, {})
-    Object.defineProperty(one, 'file', { value: fileName, enumerable: true }); // 标识文件来源
-    outputArr = outputArr.concat(one);
   }
 
-  return outputArr;
-}
-// 数据批量入库
-function saveData(fileName, type, arr) {
-  return new Promise((resolve, reject) => {
-    switch (type) {
-      case 'Zfb':
-        ZfbData.find({ file: fileName }).then((res) => { // 判断文件内容是否已入库
-          if (!res.length) {
-            ZfbData.insertMany(arr).then((data) => {
-              resolve(data)
-            }).catch(err => reject(err));
-          }
-        });
-        break;
-      case 'Wx':
-        WxData.find({ file: fileName }).then((res) => {
-          if (!res.length) {
-            WxData.insertMany(arr).then((data) => {
-              resolve(data)
-            }).catch(err => reject(err));
-          }
-        });
-        break;
+  _getFileName() {
+    /**
+     * 操作示例
+     * file['Content-Disposition']=' form-data; name="files"; filename="alipay_record_20211020_191631.csv"'
+     */
+    const fileInfo = this._info["Content-Disposition"].split("; ");
+    const fileNameIndex = fileInfo.findIndex((item) => {
+      item = iconv.decode(data, encoding); // 防止中文乱码
+      return item.indexOf("filename=") !== -1;
+    });
+    return fileInfo[fileNameIndex].slice(10, -1);
+  }
+
+  _getBaseInfo(body, req) {
+    const file = querystring.parse(body, "\r\n", ":");
+    const result = {};
+    result["ReqHeader-Content-Type"] = req.headers["content-type"].trim();
+    result["Content-Type"] = file["Content-Type"].trim();
+    result["Content-Disposition"] = file["Content-Disposition"].trim();
+    return result;
+  }
+
+  _parseData(inputArr) {
+    let start = 0,
+      end = inputArr.length,
+      dataKeys;
+    if (this._type === "zfb") {
+      start = ZFBINFO.startIndex;
+      end = ZFBINFO.endIndex;
+      dataKeys = ZFBINFO.infoKeys;
     }
-  })
+    if (this._type === "wx") {
+      start = WXINFO.startIndex;
+      dataKeys = WXINFO.infoKeys;
+    }
+
+    let outputArr = [];
+    for (let i = start; i < end; i++) {
+      let one = Object.keys(dataKeys).reduce((pre, cur, index) => {
+        let prop = cur,
+          descriptor = {
+            value: inputArr[i][index].replace(/¥/, "").trim(),
+            enumerable: true,
+          };
+        return Object.defineProperty(pre, prop, descriptor);
+      }, {});
+      Object.defineProperty(one, "file", {
+        value: fileName,
+        enumerable: true,
+      });
+      outputArr = outputArr.concat(one);
+    }
+    return outputArr;
+  }
+
+  getParsedData() {
+    const fileName = this._fileName;
+    const dataArray = this.parsedData;
+    return {
+      fileName,
+      dataArray,
+    };
+  }
 }
 
 // 1. 上传支付宝消费记录
 router.post("/uploadZfb", (req, res, next) => {
-  let body = '';
-  req.setEncoding('binary')
-    .on('data', (str) => {
+  let body = "";
+  req
+    .setEncoding("binary")
+    .on("data", (str) => {
       body += str;
     })
-    .on('end', async () => {
-      const info = getBaseInfo(body, req);
+    .on("end", async () => {
+      const zfbParseData = new ParseData(body, req, "zfb", "gbk");
+      const info = zfbParseData.getParsedData();
 
-      const dirName = 'ZfbCsv', fileName = getFileName(info);
-      const dirPath = path.resolve(__dirname, `../${dirName}`), filePath = path.resolve(__dirname, `../${dirName}/${fileName}`);
-
-      const dirExisted = await isFileExist(dirPath);
-      if (!dirExisted) {
-        fs.mkdir(dirPath, (err) => {
-          if (err) throw err;
+      if (info.dataArray.length) {
+        ZfbData.find({
+          file: info.fileName,
+        }).then((res) => {
+          if (!res.length) {
+            ZfbData.insertMany(info.dataArray)
+              .then(() => {
+                console.log(`支付宝账单[${info.fileName}]数据上传成功！`);
+              })
+              .catch((err) => reject(err));
+          }
         });
       }
-
-      const binaryData = simplifyBody(body, info);
-      await writeStream(binaryData, filePath, 'gbk');
-
-      await readStream(filePath)
-        .then((readArr) => {
-          const writeArr = getSaveData(readArr, 2, readArr.length - 20, ZfbKeys, fileName);
-          saveData(fileName, 'Zfb', writeArr)
-            .then(data => {
-              res.json({
-                type: 0,
-                data,
-              });
-            })
-            .catch(err => console.error(err))
-        })
-        .catch(err => console.error(err));
-    })
-})
+    });
+});
 
 // 2. 上传微信消费记录
 router.post("/uploadWx", (req, res, next) => {
-  let body = '';
-  req.setEncoding('binary')
-    .on('data', (str) => {
+  let body = "";
+  req
+    .setEncoding("binary")
+    .on("data", (str) => {
       body += str;
     })
-    .on('end', async () => {
-      const info = getBaseInfo(body, req);
+    .on("end", async () => {
+      const wxParseData = new ParseData(body, req, "wx", "utf-8");
+      const info = wxParseData.getParsedData();
 
-      const dirName = 'ZfbCsv', fileName = getFileName(info);
-      const dirPath = path.resolve(__dirname, `../${dirName}`), filePath = path.resolve(__dirname, `../${dirName}/${fileName}`);
-
-      const dirExisted = await isFileExist(dirPath);
-      if (!dirExisted) {
-        fs.mkdir(dirPath, (err) => {
-          if (err) throw err;
+      if (info.dataArray.length) {
+        WxData.find({
+          file: info.fileName,
+        }).then((res) => {
+          if (!res.length) {
+            WxData.insertMany(info.dataArray)
+              .then(() => {
+                console.log(`微信账单[${info.fileName}]上传成功！`);
+              })
+              .catch((err) => reject(err));
+          }
         });
       }
+    });
+});
 
-      const binaryData = simplifyBody(body, info);
-      await writeStream(binaryData, filePath, 'utf8');
-
-      await readStream(filePath)
-        .then((readArr) => {
-          const writeArr = getSaveData(readArr, 15, readArr.length, WxKeys, fileName);
-          saveData(fileName, 'Wx', writeArr)
-            .then(data => {
-              res.json({
-                type: 0,
-                data,
-              });
-            })
-            .catch(err => console.error(err))
-        })
-        .catch(err => console.error(err));
-    })
-})
-
-module.exports = router
+module.exports = router;
