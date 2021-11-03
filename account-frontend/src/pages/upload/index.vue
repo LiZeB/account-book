@@ -5,11 +5,11 @@
       <el-radio v-model="uploadType" label="2">支付宝账单</el-radio>
     </div>
     <el-upload
-      :action="url"
       :on-change="handleChange"
       :file-list="fileList"
       :show-file-list="false"
       :auto-upload="false"
+      :action="url"
     >
       <el-button type="primary">上传</el-button>
     </el-upload>
@@ -22,8 +22,8 @@ export default {
   data() {
     return {
       fileList: [],
-      url: "/upload/uploadZfb",
-      uploadType: '1'
+      uploadType: "1",
+      url: "",
     };
   },
   methods: {
@@ -36,10 +36,16 @@ export default {
           "Content-Type": "multipart/form-data",
         },
       };
-      let url = this.uploadType === '1' ? "/Upload/uploadWx" : "/Upload/uploadZfb"
+      let url =
+        this.uploadType === "1" ? "/Upload/uploadWx" : "/Upload/uploadZfb";
       this.$HTTP(url, { config: config, params: formData })
         .then((res) => {
-          console.log(res);
+          if (res.type == 0) {
+            this.$message({
+              message: "上传成功",
+              type: "success",
+            });
+          }
         })
         .catch((err) => {
           console.log(err);

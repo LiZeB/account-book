@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const querystring = require("querystring");
+const Process = require("../src/process");
 
 const { ZfbKeys, ZfbData } = require("../model/zfb-data.js");
 const { WxKeys, WxData } = require("../model/wx-data.js");
@@ -34,7 +35,7 @@ class ParseData {
       `../../data/original-data/${this._fileName}`
     );
     this._type = type.toLowerCase();
-    this._parseData = [];
+    this._parsedData = [];
     this._parsedData = this.writeStream(body).then(() => {
       return this.readStream().then((readArr) => {
         return this._parseData(readArr);
@@ -42,7 +43,7 @@ class ParseData {
     });
   }
 
-  writeStream(body, ) {
+  writeStream(body) {
     return new Promise((resolve, reject) => {
       const minIndex =
         body.indexOf(this._info["Content-Type"]) +
@@ -148,7 +149,7 @@ class ParseData {
  * NOTE
  * 1. 从客户端上直接下载下来的账单格式是不一致的，支付宝账单格式是 gbk, 微信账单格式是 utf8;
  * 2. 通过写流在 account-book/data/original-data/ 下备份的账单文件格式都是 utf8;  
- * 3. 根据原始账单和备份账单的分别，ParseData 类的 encoding 参数是不一样的
+ * 3. 根据原始账单和备份账单的差别，ParseData 类的 encoding 参数是不一样的
  */
 // 1. 上传支付宝消费记录
 router.post("/uploadZfb", (req, res, next) => {
@@ -159,19 +160,23 @@ router.post("/uploadZfb", (req, res, next) => {
       body += str;
     })
     .on("end", async () => {
-      const zfbParseData = new ParseData(body, req, "zfb", "gbk");
+      const zfbParseData = new ParseData(body, req, "zfb", "utf8");
       const info = await zfbParseData.getParsedData();
 
       if (info.dataArray.length) {
         ZfbData.find({
           file: info.fileName,
-        }).then((res) => {
-          if (!res.length) {
+        }).then((queryData) => {
+          if (!queryData.length) {
             ZfbData.insertMany(info.dataArray)
               .then(() => {
                 console.log(`支付宝账单[${info.fileName}]数据上传成功！`);
-              })
-              .catch((err) => reject(err));
+                res.send({
+                  type: 0,
+                });
+              }).then(() => {
+                new Process(ZfbData, 'zfb');
+              });
           }
         });
       }
@@ -193,13 +198,19 @@ router.post("/uploadWx", (req, res, next) => {
       if (info.dataArray.length) {
         WxData.find({
           file: info.fileName,
-        }).then((res) => {
-          if (!res.length) {
+        }).then((queryData) => {
+          if (!queryData.length) {
             WxData.insertMany(info.dataArray)
               .then(() => {
                 console.log(`微信账单[${info.fileName}]上传成功！`);
-              })
-              .catch((err) => reject(err));
+                res.send({
+                  type: 0,
+                });
+              }).then(() => {
+                /**
+                 * TODO: 对微信原始账单数据进行治理，便于统一数据结构
+                 */
+              });
           }
         });
       }
