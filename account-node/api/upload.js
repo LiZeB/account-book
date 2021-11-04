@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const querystring = require("querystring");
 const Process = require("../src/process");
-
+const { OriginalData } = require('../model/original-data.js')
 const { ZfbKeys, ZfbData } = require("../model/zfb-data.js");
 const { WxKeys, WxData } = require("../model/wx-data.js");
 
@@ -175,7 +175,7 @@ router.post("/uploadZfb", (req, res, next) => {
                   type: 0,
                 });
               }).then(() => {
-                new Process(ZfbData, 'zfb');
+                new Process(ZfbData, OriginalData, 'zfb');
               });
           }
         });

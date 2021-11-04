@@ -1,3 +1,15 @@
+const { OriginalDataKeys } = require('../model/original-data.js');
+
+const keyNameMapOfZfb = {
+    consumeType: 'dealType',
+    consumeName: 'dealPerson',
+    consumeSum: 'sum',
+    consumeTime: 'dealTime',
+    consumer: '张雅娴',
+    isSpecial: 'dealType',
+    remark: 'desc'
+};
+
 const ZfbTypeMap = {
     '餐饮美食': 3,
     '充值缴费': 2,
@@ -61,8 +73,8 @@ class Process {
         this.init();
     }
 
-    init() {
-        this._filter();
+    async init() {
+        await this._filter();
         this._syncData();
     }
 
@@ -80,15 +92,46 @@ class Process {
             return pre;
         }, []);
         const deleteTypes = [].concat(deleteTypes1, deleteTypes2);
-        this._model.deleteMany({
-            $or: [
-                ...deleteTypes
-            ]
-        }).exec();
+        return new Promise((resolve, reject) => {
+            this._model.deleteMany({
+                $or: [
+                    ...deleteTypes
+                ]
+            }).then(() => {
+                resolve();
+            }).catch(() => {
+                reject();
+            });
+        });
     }
 
     _syncData() {
-        
+        this._model.find().then(dataArr => {
+            const documents = dataArr.map(doc => {
+                const key = doc.get('dealType');
+                const value = ZfbTypeMap[key];
+                const dataObj = Object.keys(OriginalDataKeys).reduce((pre, cur) => {
+                    if(cur === 'isSpecial') {
+                        if(doc.get(keyNameMapOfZfb[cur]) === -1) {
+                            pre[cur] = true;
+                        } else {
+                            pre[cur] = false;
+                        }
+                    } else if(cur === 'consumer') {
+                        pre[cur] = keyNameMapOfZfb[cur];
+                    } else if(cur === 'consumeType') {
+                        pre[cur] = value;
+                    } else {
+                        pre[cur] = doc.get(keyNameMapOfZfb[cur]);
+                    }
+                    return pre;
+                }, {});
+                return dataObj;
+            });
+            this._sourceModel.insertMany(documents).then(() => {
+                console.log("支付宝账单数据同步成功");
+            });
+        });
     }
 
 }

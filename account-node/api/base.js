@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 
-const OriginalData = require('../model/original-data.js')
+const { OriginalData } = require('../model/original-data.js');
 const util = require('../src/util');
 
 const BASE_INFO = [
@@ -92,6 +92,9 @@ router.post("/list", (req, res, next) => {
       $gte: consumeTime[0],
       $lte: consumeTime[1]
     };
+  }
+  if (query.hasOwnProperty("consumeType")) {
+    query.consumeType = Number(query.consumeType);
   }
 
   const p1 = OriginalData.find({

@@ -323,6 +323,7 @@ export default {
         pageSize: this.pager.pageSize,
         ...this.form,
       };
+      params.consumeType = Number(params.consumeType);
       queryOriginalData(params)
         .then((res) => {
           this.accountData = res.data.data;
