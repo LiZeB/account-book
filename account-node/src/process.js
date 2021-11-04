@@ -52,8 +52,9 @@ const WxFilterTypes = {
 };
 
 class Process {
-    constructor(model, type) {
+    constructor(model, sourceModel, type) {
         this._model = model;
+        this._sourceModel = sourceModel;
         this._type = type.toLowerCase();;
         this._typeMap = this._type === 'wx' ? WxTypeMap : ZfbTypeMap;
         this._filterTypes = this._type === 'wx' ? WxFilterTypes : ZfbFilterTypes;
@@ -61,14 +62,35 @@ class Process {
     }
 
     init() {
-        const deleteTypes = Object.keys(this._typeMap).reduce((pre, cur) => {
+        this._filter();
+        this._syncData();
+    }
+
+    _filter() {
+        const deleteTypes1 = Object.keys(this._typeMap).reduce((pre, cur) => {
             if(this._typeMap[cur] === 0) {
-                pre.push('cur');
+                pre.push({dealType: cur});
             }
             return pre;
         }, []);
-        this._model.deleteMany({dealType: deleteTypes}).exec();
+        const deleteTypes2 = Object.keys(this._filterTypes).reduce((pre, cur) => {
+            if(this._filterTypes[cur] === 0) {
+                pre.push({dealStatus: cur});
+            }
+            return pre;
+        }, []);
+        const deleteTypes = [].concat(deleteTypes1, deleteTypes2);
+        this._model.deleteMany({
+            $or: [
+                ...deleteTypes
+            ]
+        }).exec();
     }
+
+    _syncData() {
+        
+    }
+
 }
 
 module.exports = Process;
