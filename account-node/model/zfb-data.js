@@ -10,7 +10,7 @@ const ZfbKeys = {
   sum: '金额',
   dealStatus: '交易状态', // 等待确认收货，还款成功，交易成功，退款成功，支付成功
   dealType: '交易分类', // 餐饮美食，充值缴费，服饰装扮，公共服务，家居家装，交通出行，酒店旅游，美容美发，母婴亲子，其他，日用百货，保险，转账红包，运动户外，医疗健康，信用借还，文化休闲，退款，数码电器，收入，生活服务
-  dealTime: '交易时间', // 2021/9/5 0:29:02
+  dealTime: '交易时间', // 2021102022001198251458538495
 }
 const ZfbDataSchema = new Schema({
   inOrOut: { type: String }, 
@@ -22,7 +22,8 @@ const ZfbDataSchema = new Schema({
   dealStatus: { type: String }, 
   dealType: { type: String }, 
   dealTime: { type: String }, 
-  file: { type: String}
+  file: { type: String},
+  consumer: { type: String},
 });
 
 const ZfbData = mongoose.model('ZfbData', ZfbDataSchema)

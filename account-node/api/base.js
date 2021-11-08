@@ -93,9 +93,6 @@ router.post("/list", (req, res, next) => {
       $lte: consumeTime[1]
     };
   }
-  if (query.hasOwnProperty("consumeType")) {
-    query.consumeType = Number(query.consumeType);
-  }
 
   const p1 = OriginalData.find({
     ...query,

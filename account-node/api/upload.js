@@ -57,7 +57,7 @@ class ParseData {
       const ws = fs.createWriteStream(this._filePath);
       ws.write(iconv.decode(binaryData, this._encoding), "utf8");
       ws.end();
-      ws.on('finish', () => {resolve();});
+      ws.on('finish', () => { resolve(); });
     });
   }
 
@@ -119,6 +119,9 @@ class ParseData {
     let outputArr = [];
     for (let i = start; i < end; i++) {
       let one = Object.keys(dataKeys).reduce((pre, cur, index) => {
+        if(cur === 'dealTime' && this._type === "zfb") {
+          index = 10;  // 交易时间的索引
+        }
         let prop = cur,
           descriptor = {
             value: inputArr[i][index].replace(/¥/, "").trim(),
@@ -128,6 +131,11 @@ class ParseData {
       }, {});
       Object.defineProperty(one, "file", {
         value: this._fileName,
+        enumerable: true,
+      });
+      const consumer = this._fileName.split("_")[0];
+      Object.defineProperty(one, "consumer", {
+        value: consumer,
         enumerable: true,
       });
       outputArr = outputArr.concat(one);

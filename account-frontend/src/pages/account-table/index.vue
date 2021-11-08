@@ -16,7 +16,7 @@
               v-for="(label, value) in $DIC.consumeTypes"
               :key="value"
               :label="label"
-              :value="value"
+              :value="String(value)"
             ></el-option>
           </el-select>
         </el-form-item>
@@ -30,7 +30,14 @@
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="开销人" prop="consumer">
-          <el-input v-model="form.consumer"></el-input>
+          <el-select v-model="form.consumer" placeholder="请选择">
+            <el-option
+              v-for="(label, value) in $DIC.personNames"
+              :key="value"
+              :label="label"
+              :value="value"
+            ></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="getAccountData">查询</el-button>
@@ -160,12 +167,12 @@ import moment from "moment";
 const _ = require("lodash");
 
 const tableColumns = [
-  { label: "开销类型", value: "consumeType" },
-  { label: "开销名称", value: "consumeName" },
-  { label: "开销金额（元）", value: "consumeSum" },
-  { label: "开销日期", value: "consumeTime" },
-  { label: "开销人", value: "consumer" },
-  { label: "是否为特殊项", value: "isSpecial" },
+  { label: "开销类型", value: "consumeType", width: "120" },
+  { label: "开销名称", value: "consumeName", width: "180" },
+  { label: "开销金额（元）", value: "consumeSum", width: "120" },
+  { label: "开销日期", value: "consumeTime", width: "180" },
+  { label: "开销人", value: "consumer", width: "120" },
+  { label: "是否为特殊项", value: "isSpecial", width: "120" },
   { label: "备注", value: "remark" },
 ];
 
@@ -176,9 +183,10 @@ export default {
     columnFilter: (value, prop, vm) => {
       if (prop === "isSpecial" && _.isBoolean(value)) {
         return value ? "是" : "否";
-      }
-      if (prop === "consumeType" && value) {
+      } else if (prop === "consumeType" && value) {
         return vm.$DIC["consumeTypes"][value];
+      } else if (prop === "consumer" && value) {
+        return vm.$DIC["personNames"][value];
       }
       return value;
     },
@@ -190,7 +198,7 @@ export default {
       accountData: [],
       pager: {
         pageNo: 1,
-        pageSize: 10,
+        pageSize: 20,
       },
       total: 0,
       dialogVisible: false,
@@ -323,7 +331,6 @@ export default {
         pageSize: this.pager.pageSize,
         ...this.form,
       };
-      params.consumeType = Number(params.consumeType);
       queryOriginalData(params)
         .then((res) => {
           this.accountData = res.data.data;

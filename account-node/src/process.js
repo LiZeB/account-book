@@ -5,7 +5,7 @@ const keyNameMapOfZfb = {
     consumeName: 'dealPerson',
     consumeSum: 'sum',
     consumeTime: 'dealTime',
-    consumer: '张雅娴',
+    consumer: 'consumer',
     isSpecial: 'dealType',
     remark: 'desc'
 };
@@ -33,6 +33,12 @@ const ZfbTypeMap = {
     '收入': 0,
     '生活服务': 2,
 };
+
+const ZfbConsumerMap = {
+    '张雅娴' : '1',
+    '李泽滨' : '2',
+    '公共账户' : '-1',
+}
 
 const ZfbFilterTypes = {
     '等待确认收货': 1,
@@ -108,8 +114,11 @@ class Process {
     _syncData() {
         this._model.find().then(dataArr => {
             const documents = dataArr.map(doc => {
-                const key = doc.get('dealType');
-                const value = ZfbTypeMap[key];
+                const dealTypeKey = doc.get('dealType');
+                const dealTypeValue = ZfbTypeMap[dealTypeKey];
+
+                const consumerKey = doc.get('consumer');
+                const consumerValue = ZfbConsumerMap[consumerKey];
                 const dataObj = Object.keys(OriginalDataKeys).reduce((pre, cur) => {
                     if(cur === 'isSpecial') {
                         if(doc.get(keyNameMapOfZfb[cur]) === -1) {
@@ -118,9 +127,13 @@ class Process {
                             pre[cur] = false;
                         }
                     } else if(cur === 'consumer') {
-                        pre[cur] = keyNameMapOfZfb[cur];
+                        if(doc.get('account').indexOf('中国工商银行储蓄卡(3783)') !== -1) {
+                            pre[cur] = ZfbConsumerMap['公共账户'];
+                        } else {
+                            pre[cur] = consumerValue;
+                        }
                     } else if(cur === 'consumeType') {
-                        pre[cur] = value;
+                        pre[cur] = dealTypeValue;
                     } else {
                         pre[cur] = doc.get(keyNameMapOfZfb[cur]);
                     }

@@ -12,57 +12,31 @@ export default {
       dics: {
         consumeTypes: [],
         indicatorTypes: [],
-        personNames: []
+        personNames: [],
       },
     };
   },
   provide() {
     return {
       $DIC: this.dics,
-      getIndicatorTypes: this.getIndicatorTypes,
-      getPersonNames: this.getPersonNames
     };
   },
   mounted() {
-    this.getConsumeTypes();
+    this.getQueryDic("consumeTypes");
+    this.getQueryDic("personNames");
+    this.getQueryDic("indicatorTypes")
   },
   methods: {
-    getConsumeTypes() {
-      const params = {
-        name: "consumeTypes",
-      };
-      this.$HTTP("/Dic/queryConsumeTypes", params)
+    getQueryDic(keyName) {
+      const params = { name: keyName };
+      this.$HTTP("/Dic/queryDic", params)
         .then((res) => {
-          this.dics["consumeTypes"] = res.data.data;
+          this.dics[keyName] = res.data.data;
         })
         .catch((err) => {
           console.log(err);
         });
     },
-    getIndicatorTypes() {
-      const params = {
-        name: "indicatorTypes",
-      };
-      this.$HTTP("/Dic/queryIndicatorTypes", params)
-        .then((res) => {
-          this.dics["indicatorTypes"] = res.data.data;
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    },
-    getPersonNames() {
-      const params = {
-        name: "personNames",
-      };
-      this.$HTTP("/Dic/queryPersonNames", params)
-        .then((res) => {
-          this.dics["personNames"] = res.data.data;
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
   },
 };
 </script>

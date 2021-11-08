@@ -59,8 +59,10 @@ dicData.find().exists('_id', true).then((_data) => {
   }
 })
 
-// 1. 查询开销类型
-router.get("/consumeTypes", (req, res, next) => {
+/**
+ * 1. 字典项查询接口
+ */
+router.get('/queryTypes', (req, res, next) => {
   dicData.findOne({ dicName: req.query.name }).then((_data) => {
     const data = JSON.parse(_data.dicObjStr)
     res.json({
@@ -68,31 +70,7 @@ router.get("/consumeTypes", (req, res, next) => {
       data,
     });
   }).catch(err => {
-    console.error("/dic/consumeTypes=", err);
-  });
-})
-// 2. 查询统计指标类型
-router.get("/indicatorTypes", (req, res, next) => {
-  dicData.findOne({ dicName: req.query.name }).then((_data) => {
-    const data = JSON.parse(_data.dicObjStr)
-    res.json({
-      type: 0,
-      data,
-    });
-  }).catch(err => {
-    console.error("/dic/indicatorTypes=", err);
-  });
-})
-// 3. 查询人员
-router.get("/personNames", (req, res, next) => {
-  dicData.findOne({ dicName: req.query.name }).then((_data) => {
-    const data = JSON.parse(_data.dicObjStr)
-    res.json({
-      type: 0,
-      data,
-    });
-  }).catch(err => {
-    console.error("/dic/personNames=", err);
+    console.error("/queryTypes", err);
   });
 })
 
