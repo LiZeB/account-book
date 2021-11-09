@@ -159,7 +159,6 @@ class ParseData {
  * 2. 通过写流在 account-book/data/original-data/ 下备份的账单文件格式都是 utf8;  
  * 3. 根据原始账单和备份账单的差别，ParseData 类的 encoding 参数是不一样的
  */
-// 1. 上传支付宝消费记录
 router.post("/uploadZfb", (req, res, next) => {
   let body = "";
   req
@@ -191,7 +190,6 @@ router.post("/uploadZfb", (req, res, next) => {
     });
 });
 
-// 2. 上传微信消费记录
 router.post("/uploadWx", (req, res, next) => {
   let body = "";
   req
@@ -215,9 +213,7 @@ router.post("/uploadWx", (req, res, next) => {
                   type: 0,
                 });
               }).then(() => {
-                /**
-                 * TODO: 对微信原始账单数据进行治理，便于统一数据结构
-                 */
+                new Process(WxData, OriginalData, 'wx');
               });
           }
         });

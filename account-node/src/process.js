@@ -10,6 +10,16 @@ const keyNameMapOfZfb = {
     remark: 'desc'
 };
 
+const keyNameMapOfWx = {
+    consumeTime: 'dealTime',
+    consumeType: 'dealType',
+    consumeName: 'dealPerson',
+    consumeSum: 'sum',
+    consumer: 'consumer',
+    isSpecial: 'dealType',
+    remark: 'desc',
+}
+
 const ZfbTypeMap = {
     '餐饮美食': 3,
     '充值缴费': 2,
@@ -34,7 +44,7 @@ const ZfbTypeMap = {
     '生活服务': 2,
 };
 
-const ZfbConsumerMap = {
+const consumerMap = {
     '张雅娴' : '1',
     '李泽滨' : '2',
     '公共账户' : '-1',
@@ -69,6 +79,8 @@ const WxFilterTypes = {
     '已全额退款': 0,
 };
 
+
+
 class Process {
     constructor(model, sourceModel, type) {
         this._model = model;
@@ -76,6 +88,7 @@ class Process {
         this._type = type.toLowerCase();;
         this._typeMap = this._type === 'wx' ? WxTypeMap : ZfbTypeMap;
         this._filterTypes = this._type === 'wx' ? WxFilterTypes : ZfbFilterTypes;
+        this._keyNameMap = this._type === 'wx' ? keyNameMapOfWx : keyNameMapOfZfb;
         this.init();
     }
 
@@ -115,34 +128,34 @@ class Process {
         this._model.find().then(dataArr => {
             const documents = dataArr.map(doc => {
                 const dealTypeKey = doc.get('dealType');
-                const dealTypeValue = ZfbTypeMap[dealTypeKey];
+                const dealTypeValue = this._typeMap[dealTypeKey];
 
                 const consumerKey = doc.get('consumer');
-                const consumerValue = ZfbConsumerMap[consumerKey];
+                const consumerValue = consumerMap[consumerKey];
                 const dataObj = Object.keys(OriginalDataKeys).reduce((pre, cur) => {
                     if(cur === 'isSpecial') {
-                        if(doc.get(keyNameMapOfZfb[cur]) === -1) {
+                        if(doc.get(this._keyNameMap[cur]) === -1) {
                             pre[cur] = true;
                         } else {
                             pre[cur] = false;
                         }
                     } else if(cur === 'consumer') {
-                        if(doc.get('account').indexOf('中国工商银行储蓄卡(3783)') !== -1) {
-                            pre[cur] = ZfbConsumerMap['公共账户'];
+                        if(doc.get('account').indexOf('工商银行储蓄卡(3783)') !== -1) {
+                            pre[cur] = consumerMap['公共账户'];
                         } else {
                             pre[cur] = consumerValue;
                         }
                     } else if(cur === 'consumeType') {
                         pre[cur] = dealTypeValue;
                     } else {
-                        pre[cur] = doc.get(keyNameMapOfZfb[cur]);
+                        pre[cur] = doc.get(this._keyNameMap[cur]);
                     }
                     return pre;
                 }, {});
                 return dataObj;
             });
             this._sourceModel.insertMany(documents).then(() => {
-                console.log("支付宝账单数据同步成功");
+                console.log(`${this._type}账单数据同步成功`);
             });
         });
     }

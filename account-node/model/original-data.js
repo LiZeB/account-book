@@ -24,7 +24,7 @@ const OriginalDataSchema = new Schema({
 const OriginalData = mongoose.model('OriginalData', OriginalDataSchema)
 
 module.exports = {
-  OriginalDataKeys: OriginalDataKeys,
-  OriginalData: OriginalData,
+  OriginalDataKeys,
+  OriginalData,
 }
 

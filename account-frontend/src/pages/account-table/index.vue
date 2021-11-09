@@ -11,7 +11,7 @@
         :inline="true"
       >
         <el-form-item label="开销类型" prop="consumeType">
-          <el-select v-model="form.consumeType" placeholder="请选择">
+          <el-select v-model="form.consumeType" clearable placeholder="请选择">
             <el-option
               v-for="(label, value) in $DIC.consumeTypes"
               :key="value"
@@ -30,7 +30,7 @@
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="开销人" prop="consumer">
-          <el-select v-model="form.consumer" placeholder="请选择">
+          <el-select v-model="form.consumer" clearable placeholder="请选择">
             <el-option
               v-for="(label, value) in $DIC.personNames"
               :key="value"
@@ -168,7 +168,7 @@ const _ = require("lodash");
 
 const tableColumns = [
   { label: "开销类型", value: "consumeType", width: "120" },
-  { label: "开销名称", value: "consumeName", width: "180" },
+  { label: "开销名称", value: "consumeName", width: "200" },
   { label: "开销金额（元）", value: "consumeSum", width: "120" },
   { label: "开销日期", value: "consumeTime", width: "180" },
   { label: "开销人", value: "consumer", width: "120" },
@@ -340,9 +340,7 @@ export default {
           console.log(err);
         });
     },
-    handleExport() {
-      
-    }
+    handleExport() {},
   },
 };
 </script>

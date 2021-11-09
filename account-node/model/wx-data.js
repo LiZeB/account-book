@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const WxKeys = {
-  dealTime: '交易时间', // 2021/9/1  7:06:31
+  dealTime: '交易时间', // 2021-09-01  07:06:31
   dealType: '交易类型', // 微信红包（群红包/单发）、转账、群收款、二维码收付款、商户消费、充值提现、信用卡还款、有退款
   dealPerson: '交易对方',
   desc: '商品',
@@ -20,7 +20,8 @@ const WxDataSchema = new Schema({
   sum: { type: Number },
   account: { type: String }, 
   dealStatus: { type: String },
-  file: { type: String}
+  file: { type: String},
+  consumer: {type: String},
 });
 
 const WxData = mongoose.model('WxData', WxDataSchema)
