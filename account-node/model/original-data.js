@@ -11,6 +11,8 @@ const OriginalDataKeys = {
   remark: '备注'
 };
 
+const customSpecialTypes = ['5', '7', '9', '10', '-1'];
+
 const OriginalDataSchema = new Schema({
   consumeType: { type: String },  // 开销类型
   consumeName: { type: String },  // 开销名称
@@ -26,5 +28,6 @@ const OriginalData = mongoose.model('OriginalData', OriginalDataSchema)
 module.exports = {
   OriginalDataKeys,
   OriginalData,
+  customSpecialTypes,
 }
 

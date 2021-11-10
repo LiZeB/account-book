@@ -1,18 +1,10 @@
 const express = require('express')
 const router = express.Router()
 
-const { OriginalData } = require('../model/original-data.js');
+const { OriginalData, customSpecialTypes, OriginalDataKeys } = require('../model/original-data.js');
 const util = require('../src/util');
 
-const BASE_INFO = [
-  "consumeType",
-  "consumeName",
-  "consumeSum",
-  "consumeTime",
-  "consumer",
-  "isSpecial",
-  "remark"
-];
+const BASE_INFO = Object.keys(OriginalDataKeys);
 
 // 1. 新增一条原始数据 
 router.post('/create', (req, res, next) => {
@@ -20,6 +12,8 @@ router.post('/create', (req, res, next) => {
     pre[cur] = req.body[cur];
     if (cur === 'consumeTime' && pre[cur]) {
       pre[cur] = pre[cur].trim().slice(0, 10);
+    } else if(cur === 'isSpecial' && customSpecialTypes.includes(pre.consumeType)) {
+
     }
     return pre;
   }, {});
