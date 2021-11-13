@@ -13,7 +13,7 @@ router.post('/create', (req, res, next) => {
     if (cur === 'consumeTime' && pre[cur]) {
       pre[cur] = pre[cur].trim().slice(0, 10);
     } else if(cur === 'isSpecial' && customSpecialTypes.includes(pre.consumeType)) {
-
+      pre[cur] = true;
     }
     return pre;
   }, {});

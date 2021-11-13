@@ -42,6 +42,7 @@ const ZfbTypeMap = {
     '数码电器': '9',
     '收入': '0',
     '生活服务': '2',
+    '投资理财': '0',
 };
 
 const consumerMap = {
@@ -63,11 +64,12 @@ const WxTypeMap = {
     '微信红包（单发）': '-1',
     '转账': '-1',
     '群收款': '0',
-    '二维码收付款': '-1',
+    '扫二维码付款': '-1',
     '商户消费': '2',
     '充值提现': '0',
     '信用卡还款': '0',
     '有退款': '0',
+    '零钱提现': '0',
 };
 
 const WxFilterTypes = {
@@ -134,7 +136,7 @@ class Process {
                 const consumerValue = consumerMap[consumerKey];
                 const dataObj = Object.keys(OriginalDataKeys).reduce((pre, cur) => {
                     if (cur === 'isSpecial') {
-                        if (customSpecialTypes.includes(doc.get(this._keyNameMap[cur]))) {
+                        if (customSpecialTypes.includes(dealTypeValue)) {
                             pre[cur] = true;
                         } else {
                             pre[cur] = false;

@@ -90,7 +90,7 @@ class ParseData {
     const fileNameIndex = fileInfo.findIndex((item) => {
       return item.indexOf("filename=") !== -1;
     });
-    return iconv.decode(fileInfo[fileNameIndex].slice(10, -1), this._encoding); // 防止中文乱码
+    return iconv.decode(fileInfo[fileNameIndex].slice(10, -1), "utf8"); 
   }
 
   _getBaseInfo(body, req) {
@@ -167,7 +167,7 @@ router.post("/uploadZfb", (req, res, next) => {
       body += str;
     })
     .on("end", async () => {
-      const zfbParseData = new ParseData(body, req, "zfb", "utf8");
+      const zfbParseData = new ParseData(body, req, "zfb", "gbk");
       const info = await zfbParseData.getParsedData();
 
       if (info.dataArray.length) {

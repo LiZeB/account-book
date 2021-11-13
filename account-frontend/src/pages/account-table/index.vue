@@ -40,7 +40,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="getAccountData">查询</el-button>
+          <el-button type="primary" @click="handleQuery">查询</el-button>
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
@@ -83,9 +83,9 @@
         <el-pagination
           @size-change="pageSizeChange"
           @current-change="pageNoChange"
-          :current-page="pager.pageNo"
+          :current-page="pageNo"
           :page-sizes="[10, 20, 50, 100]"
-          :page-size="pager.pageSize"
+          :page-size="pageSize"
           :total="total"
           layout="total, sizes, prev, pager, next, jumper"
         />
@@ -196,17 +196,17 @@ export default {
       vm: this,
       tableColumns: Object.freeze(tableColumns),
       accountData: [],
-      pager: {
-        pageNo: 1,
-        pageSize: 20,
-      },
+      pageNo: 1,
+      pageSize: 20,
       total: 0,
       dialogVisible: false,
       form: {
         consumeType: "",
         consumeTime: [
-          moment().startOf("month").format("YYYY-MM-DD"),
-          moment().endOf("month").format("YYYY-MM-DD"),
+          moment(`${moment().format("YYYY-MM")}-10`)
+            .subtract(1, "months")
+            .format("YYYY-MM-DD"),
+          moment(`${moment().format("YYYY-MM")}-10`).format("YYYY-MM-DD"),
         ],
         consumer: "",
       },
@@ -229,15 +229,24 @@ export default {
     this.getAccountData();
   },
   methods: {
+    handleQuery() {
+      this.pageSize = 20;
+      this.pageNum = 1;
+      this.getAccountData();
+    },
     handleReset() {
       this.form = {
         consumeType: "",
         consumeTime: [
-          moment().startOf("month").format("YYYY-MM-DD"),
-          moment().endOf("month").format("YYYY-MM-DD"),
+          moment(`${moment().format("YYYY-MM")}-10`)
+            .subtract(1, "months")
+            .format("YYYY-MM-DD"),
+          moment(`${moment().format("YYYY-MM")}-10`).format("YYYY-MM-DD"),
         ],
         consumer: "",
       };
+      this.pageNum = 1;
+      this.pageSize = 20;
       this.getAccountData();
     },
     handleSelectionChange(selection) {
@@ -318,17 +327,17 @@ export default {
       this.dialogTitle = "添加";
     },
     pageSizeChange(pageSize) {
-      this.pager.pageSize = pageSize;
+      this.pageSize = pageSize;
       this.getAccountData();
     },
     pageNoChange(pageNo) {
-      this.pager.pageNo = pageNo;
+      this.pageNo = pageNo;
       this.getAccountData();
     },
     getAccountData() {
       const params = {
-        pageNum: this.pager.pageNo,
-        pageSize: this.pager.pageSize,
+        pageNum: this.pageNo,
+        pageSize: this.pageSize,
         ...this.form,
       };
       queryOriginalData(params)
