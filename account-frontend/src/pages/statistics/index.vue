@@ -55,15 +55,7 @@
           </el-form-item>
         </el-form>
       </div>
-      <div id="lineChart" slot="line-echart">
-        
-      </div>
-      <div id="barChart" slot="bar-echart">
-
-      </div>
-      <div id="pieChart" slot="pie-echart">
-        
-      </div>
+      <div id="pieChart" slot="pie-echart"></div>
     </StatisticsLayout>
   </div>
 </template>
@@ -71,13 +63,14 @@
 <script>
 import StatisticsLayout from "./statistics-layout.vue";
 import moment from "moment";
+import { getStatisticsByCustomType } from "@/api/statistic";
 
-const echarts = require('echarts');
+const echarts = require("echarts");
 
 export default {
   name: "Statistics",
   components: { StatisticsLayout },
-  inject: [ "$DIC", "getIndicatorTypes", "getPersonNames" ],
+  inject: ["$DIC"],
   data() {
     return {
       form: {
@@ -94,73 +87,82 @@ export default {
     };
   },
   mounted() {
-    this.getIndicatorTypes();
-    this.getPersonNames();
-
     this.getStatisticData();
   },
   methods: {
     getStatisticData() {
-      this.statisticData = {
-        '休闲娱乐': 1048,
-        '日用百货': 948,
-        '餐饮美食': 848,
-        '水果零食': 748,
-        '旅游出行': 648,
-        '服饰装扮': 548,
-        '亲友长辈': 448,
-        '其他': 348,
-      };
-      this.initChart();
+      // this.statisticData = {
+      //   '休闲娱乐': 1048,
+      //   '日用百货': 948,
+      //   '餐饮美食': 848,
+      //   '水果零食': 748,
+      //   '旅游出行': 648,
+      //   '服饰装扮': 548,
+      //   '亲友长辈': 448,
+      //   '其他': 348,
+      // };
+      getStatisticsByCustomType().then((res) => {
+        const dataMap = new Map();
+        res.data.data.map(item => {
+          dataMap.set(item.consumeType, item.sum);
+        })
+        this.statisticData = this.$DIC.consumeTypes.reduce((pre, cur) => {
+          if (dataMap.has(cur.value)) {
+            pre[cur.label] = dataMap.get(cur.value);
+          } else {
+            pre[cur.label] = 0;
+          }
+          return pre;
+        }, {});
+        console.log("this.statisticData===", this.statisticData);
+        this.initChart();
+      });
     },
     initChart() {
       this.initLineChart();
       this.initBarChart();
       this.initPieChart();
     },
-    initLineChart() {
-
-    },
-    initBarChart() {
-
-    },
+    initLineChart() {},
+    initBarChart() {},
     initPieChart() {
       let pieChart = echarts.init(document.getElementById("pieChart"));
 
-      let data = Object.keys(this.statisticData).reduce((pre, cur)=>{
+      let data = Object.keys(this.statisticData).reduce((pre, cur) => {
         return pre.concat({
           name: cur,
-          value: this.statisticData[cur]
+          value: this.statisticData[cur],
         });
       }, []);
 
       let options = {
         title: {
-          text: '开销分布',
-          left: 'center',
-          top: '5%'
+          text: "开销分布",
+          left: "center",
+          top: "5%",
         },
         legend: {
-          orient: 'vertical',
-          top: 'center',
-          left: '5%'
+          orient: "vertical",
+          top: "center",
+          left: "5%",
         },
         series: [
           {
-            type: 'pie',
-            radius: ['15%', '65%'],
+            type: "pie",
+            radius: ["15%", "65%"],
             itemStyle: {
               borderRadius: 10,
-              borderColor: '#fff',
-              borderWidth: 2
+              borderColor: "#fff",
+              borderWidth: 2,
             },
             label: {
-              alignTo: 'edge', // 文字对齐
-              formatter: '{b}\n{c}',
+              alignTo: "edge", // 文字对齐
+              formatter: "{b}\n{c}",
               minMargin: 5,
               lineHeight: 15,
             },
-            labelLayout: function (params) { // 延长引导线
+            labelLayout: function (params) {
+              // 延长引导线
               const isLeft = params.labelRect.x < pieChart.getWidth() / 2;
               const points = params.labelLinePoints;
 
@@ -168,11 +170,11 @@ export default {
                 ? params.labelRect.x
                 : params.labelRect.x + params.labelRect.width;
               return {
-                labelLinePoints: points
+                labelLinePoints: points,
               };
             },
-            data: data
-          }
+            data: data,
+          },
         ],
       };
 
@@ -189,7 +191,7 @@ export default {
         indicatorType: [],
       };
       this.getStatisticData();
-    }
+    },
   },
 };
 </script>
@@ -198,7 +200,7 @@ export default {
 .statistics__wrapper {
   width: 100%;
   height: 100%;
-  #pieChart{
+  #pieChart {
     width: 100%;
     height: 100%;
   }

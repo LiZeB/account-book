@@ -34,6 +34,8 @@ const dicRoutes = require("../api/dic")
 app.use('/dic', dicRoutes);
 const uploadRoutes = require("../api/upload")
 app.use('/upload', uploadRoutes);
+const statisticRoutes = require("../api/statistic");
+app.use('/statistic', statisticRoutes);
 
 app.use((err, req, res, next) => {
   if (err) {

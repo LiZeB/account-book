@@ -3,15 +3,9 @@
     <div class="filter-form">
       <slot name="filter-form"></slot>
     </div>
-    <div class="line-echart">
-      <slot name="line-echart"></slot>
-    </div>
-    <div class="bar-echart">
-      <slot name="bar-echart"></slot>
-    </div>
     <div class="pie-echart">
       <slot name="pie-echart"></slot>
-    </div>
+    </div>    
   </div>
 </template>
 
@@ -40,10 +34,6 @@ export default {
     grid-column-start: 1;
     grid-column-end: 3;
     grid-column-gap: 16px;
-  }
-  .line-echart {
-    grid-row-start: 2;
-    grid-row-end: 4;
   }
   div:not(:first-child) {
     background: #ffffff;

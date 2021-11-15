@@ -46,9 +46,11 @@
       </el-form>
     </div>
     <div class="account-table__operate">
-      <el-button type="success" @click="handleExport">导入</el-button>
-      <el-button type="primary" @click="handleAdd">添加</el-button>
-      <el-button type="danger" @click="handleMultiDelete">刪除</el-button>
+      <div class="btns">
+        <el-button type="success" @click="handleExport">导入</el-button>
+        <el-button type="primary" @click="handleAdd">添加</el-button>
+        <el-button type="danger" @click="handleMultiDelete">刪除</el-button>
+      </div>
     </div>
     <div class="account-table__container">
       <el-table
@@ -362,14 +364,19 @@ export default {
   box-sizing: border-box;
   padding: 16px 32px;
   .account-table__operate {
+    width: 100%;
     height: 64px;
     line-height: 64px;
-    .el-button {
-      width: 88px;
-      min-width: 88px;
-      height: 32px;
-      line-height: 32px;
-      padding: 0;
+    display: inline-flex;
+    justify-content: space-between;
+    .btns {
+      .el-button {
+        width: 88px;
+        min-width: 88px;
+        height: 32px;
+        line-height: 32px;
+        padding: 0;
+      }
     }
   }
   .account-table__filter {
