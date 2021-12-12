@@ -85,7 +85,7 @@
         <el-pagination
           @size-change="pageSizeChange"
           @current-change="pageNoChange"
-          :current-page="pageNo"
+          :current-page="pageNum"
           :page-sizes="[10, 20, 50, 100]"
           :page-size="pageSize"
           :total="total"
@@ -135,7 +135,14 @@
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="开销人" prop="consumer">
-          <el-input v-model="addForm.consumer"></el-input>
+           <el-select v-model="addForm.consumer" clearable placeholder="请选择">
+            <el-option
+              v-for="(label, value) in $DIC.personNames"
+              :key="value"
+              :label="label"
+              :value="value"
+            ></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="是否为特殊项" prop="isSpecial">
           <el-radio v-model="addForm.isSpecial" :label="true">是</el-radio>
@@ -198,7 +205,7 @@ export default {
       vm: this,
       tableColumns: Object.freeze(tableColumns),
       accountData: [],
-      pageNo: 1,
+      pageNum: 1,
       pageSize: 20,
       total: 0,
       dialogVisible: false,
@@ -332,26 +339,28 @@ export default {
       this.pageSize = pageSize;
       this.getAccountData();
     },
-    pageNoChange(pageNo) {
-      this.pageNo = pageNo;
+    pageNoChange(pageNum) {
+      this.pageNum = pageNum;
       this.getAccountData();
     },
     getAccountData() {
       const params = {
-        pageNum: this.pageNo,
+        pageNum: this.pageNum,
         pageSize: this.pageSize,
         ...this.form,
       };
       queryOriginalData(params)
         .then((res) => {
-          this.accountData = res.data.data;
-          this.total = res.data.total;
+          this.accountData = res.data;
+          this.total = res.total;
         })
         .catch((err) => {
           console.log(err);
         });
     },
-    handleExport() {},
+    handleExport() {
+      this.$router.push({path: "/upload"});
+    },
   },
 };
 </script>

@@ -5,6 +5,9 @@
     </div>
     <div class="pie-echart">
       <slot name="pie-echart"></slot>
+    </div>
+    <div class="bar-echart">
+      <slot name="bar-echart"></slot>
     </div>    
   </div>
 </template>

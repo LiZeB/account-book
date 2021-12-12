@@ -5,7 +5,6 @@ const Process = require("../src/process");
 const { OriginalData } = require('../model/original-data.js')
 const { ZfbKeys, ZfbData } = require("../model/zfb-data.js");
 const { WxKeys, WxData } = require("../model/wx-data.js");
-
 const fs = require("fs");
 const path = require("path");
 const csv = require("fast-csv");
@@ -35,29 +34,37 @@ class ParseData {
       `../../data/original-data/${this._fileName}`
     );
     this._type = type.toLowerCase();
-    this._parsedData = [];
+
     this._parsedData = this.writeStream(body).then(() => {
       return this.readStream().then((readArr) => {
         return this._parseData(readArr);
       });
+    }).catch(() => {
+      return;
     });
   }
 
   writeStream(body) {
     return new Promise((resolve, reject) => {
-      const minIndex =
-        body.indexOf(this._info["Content-Type"]) +
-        this._info["Content-Type"].length;
-      const maxIndex = body.indexOf(
-        `--${this._info["ReqHeader-Content-Type"]
-          .split("; ")[1]
-          .replace("boundary=", "")}--`
-      );
-      const binaryData = body.slice(minIndex, maxIndex);
-      const ws = fs.createWriteStream(this._filePath);
-      ws.write(iconv.decode(binaryData, this._encoding), "utf8");
-      ws.end();
-      ws.on('finish', () => { resolve(); });
+      fs.exists(path.resolve(__dirname, `../../data/original-data/${this._fileName}`), fileExisted => {
+        if (fileExisted) {
+          reject();
+        } else {
+          const minIndex =
+            body.indexOf(this._info["Content-Type"]) +
+            this._info["Content-Type"].length;
+          const maxIndex = body.indexOf(
+            `--${this._info["ReqHeader-Content-Type"]
+              .split("; ")[1]
+              .replace("boundary=", "")}--`
+          );
+          const binaryData = body.slice(minIndex, maxIndex);
+          const ws = fs.createWriteStream(this._filePath);
+          ws.write(iconv.decode(binaryData, this._encoding), "utf8");
+          ws.end();
+          ws.on('finish', () => { resolve(); });
+        }
+      });
     });
   }
 
@@ -90,7 +97,7 @@ class ParseData {
     const fileNameIndex = fileInfo.findIndex((item) => {
       return item.indexOf("filename=") !== -1;
     });
-    return iconv.decode(fileInfo[fileNameIndex].slice(10, -1), "utf8"); 
+    return iconv.decode(fileInfo[fileNameIndex].slice(10, -1), "utf8");
   }
 
   _getBaseInfo(body, req) {
@@ -119,7 +126,7 @@ class ParseData {
     let outputArr = [];
     for (let i = start; i < end; i++) {
       let one = Object.keys(dataKeys).reduce((pre, cur, index) => {
-        if(cur === 'dealTime' && this._type === "zfb") {
+        if (cur === 'dealTime' && this._type === "zfb") {
           index = 10;  // 交易时间的索引
         }
         let prop = cur,
@@ -167,12 +174,14 @@ router.post("/uploadZfb", (req, res, next) => {
       body += str;
     })
     .on("end", async () => {
-      const zfbParseData = new ParseData(body, req, "zfb", "gbk");
+      const zfbParseData = new ParseData(body, req, "zfb", "gbk");  // 根据下载源修改格式
       const info = await zfbParseData.getParsedData();
 
-      if (info.dataArray.length) {
-        ZfbData.find({
-          file: info.fileName,
+      if (info?.dataArray?.length) {
+        ZfbData.deleteMany({
+          file: {
+            $ne: info.fileName
+          },
         }).then((queryData) => {
           if (!queryData.length) {
             ZfbData.insertMany(info.dataArray)
@@ -185,6 +194,11 @@ router.post("/uploadZfb", (req, res, next) => {
                 new Process(ZfbData, OriginalData, 'zfb');
               });
           }
+        });
+      } else {
+        res.send({
+          type: -1,
+          msg: '该文件已上传'
         });
       }
     });
@@ -201,9 +215,11 @@ router.post("/uploadWx", (req, res, next) => {
       const wxParseData = new ParseData(body, req, "wx", "utf8");
       const info = await wxParseData.getParsedData();
 
-      if (info.dataArray.length) {
-        WxData.find({
-          file: info.fileName,
+      if (info?.dataArray?.length) {
+        WxData.deleteMany({
+          file: {
+            $ne: info.fileName,
+          }
         }).then((queryData) => {
           if (!queryData.length) {
             WxData.insertMany(info.dataArray)
@@ -216,6 +232,11 @@ router.post("/uploadWx", (req, res, next) => {
                 new Process(WxData, OriginalData, 'wx');
               });
           }
+        });
+      } else {
+        res.send({
+          type: -1,
+          msg: '该文件已上传'
         });
       }
     });

@@ -5,6 +5,8 @@
 </template>
 
 <script>
+import { queryTypes } from "@/api/account-table.js";
+
 export default {
   name: "App",
   data() {
@@ -24,14 +26,14 @@ export default {
   mounted() {
     this.getQueryDic("consumeTypes");
     this.getQueryDic("personNames");
-    this.getQueryDic("indicatorTypes")
+    this.getQueryDic("indicatorTypes");
   },
   methods: {
     getQueryDic(keyName) {
       const params = { name: keyName };
-      this.$HTTP("/Dic/queryDic", params)
+      queryTypes(params)
         .then((res) => {
-          this.dics[keyName] = res.data.data;
+          this.dics[keyName] = res.data;
         })
         .catch((err) => {
           console.log(err);

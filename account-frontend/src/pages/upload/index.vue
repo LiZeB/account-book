@@ -17,6 +17,8 @@
 </template>
 
 <script>
+import { uploadWX, uploadZFB } from "@/api/upload";
+
 export default {
   name: "upload",
   data() {
@@ -36,14 +38,18 @@ export default {
           "Content-Type": "multipart/form-data",
         },
       };
-      let url =
-        this.uploadType === "1" ? "/Upload/uploadWx" : "/Upload/uploadZfb";
-      this.$HTTP(url, { config: config, params: formData })
+      const cb = this.uploadType === "1" ? uploadWX : uploadZFB;
+      cb(formData, config)
         .then((res) => {
           if (res.type == 0) {
             this.$message({
               message: "上传成功",
               type: "success",
+            });
+          } else {
+            this.$message({
+              message: res.msg,
+              type: "error",
             });
           }
         })

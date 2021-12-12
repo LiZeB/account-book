@@ -11,10 +11,10 @@
           label-position="right"
           :inline="true"
         >
-          <el-form-item label="时间范围" prop="statisticsTime">
+          <el-form-item label="时间范围">
             <el-date-picker
               type="daterange"
-              v-model="form.statisticsTime"
+              v-model="timeRangeProxy"
               format="yyyy-MM-dd"
               value-format="yyyy-MM-dd"
             ></el-date-picker>
@@ -29,41 +29,54 @@
               ></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="统计开销类型" prop="consumeTypes">
-            <el-select v-model="form.consumeType" multiple placeholder="请选择">
-              <el-option
-                v-for="(label, value) in $DIC.consumeTypes"
-                :key="value"
-                :label="label"
-                :value="value"
-              ></el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="统计指标类型" prop="indicatorType">
-            <el-select v-model="form.statisticsItem">
-              <el-option
-                v-for="(label, value) in $DIC.indicatorTypes"
-                :key="value"
-                :label="label"
-                :value="value"
-              ></el-option>
-            </el-select>
-          </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="getStatisticData">查询</el-button>
+            <el-button type="primary" @click="handleQuery"
+              >查询</el-button
+            >
             <el-button type="default" @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
       </div>
       <div id="pieChart" slot="pie-echart"></div>
+      <div id="barChart" slot="bar-echart">
+        <div v-for="item1 in Object.keys(list)" :key="item1">
+          <div class="month">{{ item1 }}</div>
+          <div v-for="(item2, index) in Object.keys(list[item1])" :key="index">
+            <div class="name">{{ $DIC.personNames[item2] }}</div>
+            <div class="value">
+              <span
+                >正常开销:&nbsp;
+                {{ list[item1][item2].notSpecialSum.toFixed(2) }}</span
+              >
+              <span
+                >特殊开销:&nbsp;
+                {{ list[item1][item2].specialSum.toFixed(2) }}</span
+              >
+              <span
+                >总开销:&nbsp;
+                {{
+                  (
+                    list[item1][item2].specialSum +
+                    list[item1][item2].notSpecialSum
+                  ).toFixed(2)
+                }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
     </StatisticsLayout>
   </div>
 </template>
 
 <script>
+/* eslint-disable */
 import StatisticsLayout from "./statistics-layout.vue";
 import moment from "moment";
-import { getStatisticsByCustomType } from "@/api/statistic";
+import {
+  getStatisticsByCustomType,
+  getStatisticsByGroup,
+} from "@/api/statistic";
 
 const echarts = require("echarts");
 
@@ -74,67 +87,108 @@ export default {
   data() {
     return {
       form: {
-        statisticsTime: [
-          moment().startOf("month").format("YYYY-MM-DD"),
-          moment().endOf("month").format("YYYY-MM-DD"),
-        ],
         personNames: [],
-        consumeTypes: [],
-        indicatorType: [],
+        statisticsTime: [
+          moment().subtract(2, "months").format("YYYY-MM-DD"),
+          moment().subtract(1, "months").format("YYYY-MM-DD"),
+        ],
       },
       rules: {},
+      pieStatisticData: {},
       statisticData: {},
     };
   },
-  mounted() {
-    this.getStatisticData();
-  },
-  methods: {
-    getStatisticData() {
-      // this.statisticData = {
-      //   '休闲娱乐': 1048,
-      //   '日用百货': 948,
-      //   '餐饮美食': 848,
-      //   '水果零食': 748,
-      //   '旅游出行': 648,
-      //   '服饰装扮': 548,
-      //   '亲友长辈': 448,
-      //   '其他': 348,
-      // };
-      getStatisticsByCustomType().then((res) => {
-        const dataMap = new Map();
-        res.data.data.map(item => {
-          dataMap.set(item.consumeType, item.sum);
-        })
-        this.statisticData = this.$DIC.consumeTypes.reduce((pre, cur) => {
-          if (dataMap.has(cur.value)) {
-            pre[cur.label] = dataMap.get(cur.value);
+  computed: {
+    timeRangeProxy: {
+      set(newVal) {
+        this.form.statisticsTime = [
+          moment(newVal[0]).startOf("day").format("YYYY-MM-DD HH:mm:ss"),
+          moment(newVal[1]).endOf("day").format("YYYY-MM-DD HH:mm:ss"),
+        ];
+      },
+      get() {
+        return this.form.statisticsTime;
+      },
+    },
+    list() {
+      const result = {};
+      Object.keys(this.statisticData).map((item) => {
+        const dataList = this.statisticData[item];
+        console.log(dataList);
+        const statistic = dataList.reduce((pre, cur) => {
+          if (!Object.prototype.hasOwnProperty.call(pre, cur.consumer)) {
+            pre[cur.consumer] = {};
+          }
+          if (
+            !Object.prototype.hasOwnProperty.call(
+              pre[cur.consumer],
+              "notSpecialSum"
+            )
+          ) {
+            pre[cur.consumer].notSpecialSum = 0;
+          }
+          if (
+            !Object.prototype.hasOwnProperty.call(
+              pre[cur.consumer],
+              "specialSum"
+            )
+          ) {
+            pre[cur.consumer].specialSum = 0;
+          }
+
+          if (cur.isSpecial) {
+            pre[cur.consumer].specialSum += cur.consumeSum;
           } else {
-            pre[cur.label] = 0;
+            pre[cur.consumer].notSpecialSum += cur.consumeSum;
           }
           return pre;
         }, {});
-        console.log("this.statisticData===", this.statisticData);
-        this.initChart();
+        result[item] = statistic;
+      });
+      console.log(result);
+      return result;
+    },
+  },
+  mounted() {
+    this.handleQuery();
+  },
+  methods: {
+    handleQuery() {
+      this.getPieStatisticData();
+      this.getStatisticData();
+    },
+    getPieStatisticData() {
+      const data = {
+        personNames: this.form.personNames,
+        statisticsTime: this.timeRangeProxy,
+      };
+      getStatisticsByCustomType(data).then((res) => {
+        const dataMap = new Map();
+        res.data.map((item) => {
+          dataMap.set(item._id, item.sum);
+        });
+        this.pieStatisticData = Object.keys(this.$DIC.consumeTypes).reduce(
+          (pre, cur) => {
+            if (dataMap.has(cur)) {
+              pre[this.$DIC.consumeTypes[cur]] = dataMap.get(cur);
+            } else {
+              pre[this.$DIC.consumeTypes[cur]] = 0;
+            }
+            return pre;
+          },
+          {}
+        );
+        this.initPieChart();
       });
     },
-    initChart() {
-      this.initLineChart();
-      this.initBarChart();
-      this.initPieChart();
-    },
-    initLineChart() {},
-    initBarChart() {},
     initPieChart() {
-      let pieChart = echarts.init(document.getElementById("pieChart"));
-
-      let data = Object.keys(this.statisticData).reduce((pre, cur) => {
+      const pieChart = echarts.init(document.getElementById("pieChart"));
+      let data = Object.keys(this.pieStatisticData).reduce((pre, cur) => {
         return pre.concat({
           name: cur,
-          value: this.statisticData[cur],
+          value: this.pieStatisticData[cur],
         });
       }, []);
-
       let options = {
         title: {
           text: "开销分布",
@@ -177,8 +231,36 @@ export default {
           },
         ],
       };
-
       pieChart.setOption(options);
+    },
+    getStatisticData() {
+      const data = {
+        personNames: this.form.personNames,
+        statisticsTime: this.timeRangeProxy,
+      };
+      getStatisticsByGroup(data).then((res) => {
+        this.statisticData = res.data.reduce((pre, cur) => {
+          const months = moment
+            .duration(
+              moment(data.statisticsTime[1]) - moment(data.statisticsTime[0])
+            )
+            .months();
+          for (let i = 0; i < months; i++) {
+            const timeRange = moment(data.statisticsTime[0]);
+            const start = timeRange.add(i, "months").format("YYYY-MM");
+            const end = timeRange.add(i + 1, "months").format("YYYY-MM");
+            const key = `${start}---${end}`;
+            if (!Object.prototype.hasOwnProperty.call(pre, key)) {
+              pre[key] = [];
+            }
+            const time = cur.consumeTime.slice(0, 7);
+            if (time >= start && time <= end) {
+              pre[key].push(cur);
+            }
+          }
+          return pre;
+        }, {});
+      });
     },
     handleReset() {
       this.form = {
@@ -190,7 +272,7 @@ export default {
         consumeTypes: [],
         indicatorType: [],
       };
-      this.getStatisticData();
+      this.handleQuery();
     },
   },
 };
@@ -203,6 +285,27 @@ export default {
   #pieChart {
     width: 100%;
     height: 100%;
+  }
+  #barChart {
+    width: 100%;
+    height: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+    overflow-y: scroll;
+    > div {
+      border-bottom: 1px solid #e5e5e5;
+      padding: 10px 0;
+      box-sizing: border-box;
+      .name {
+        margin: 10px 0;
+      }
+      .value {
+        > span {
+          display: inline-block;
+          margin-right: 20px;
+        }
+      }
+    }
   }
 }
 </style>

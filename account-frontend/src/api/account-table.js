@@ -1,20 +1,35 @@
 import axios from "axios";
 
-// TODO: 后续要加上http的封装，请求和响应拦截器
 export function queryOriginalData(data) {
-  return axios.post("/account-web/base/list", data);
+  return axios.post("/account-web/base/list", data).then(res => {
+    return res.data;
+  });
 }
 
 export function saveOriginalData(data) {
-  return axios.post("/account-web/base/create", data);
+  return axios.post("/account-web/base/create", data).then(res => {
+    return res.data;
+  });
 }
 
 export function deleteOriginalData(params) {
   return axios.get("/account-web/base/delete", {
     params,
+  }).then(res => {
+    return res.data;
   });
 }
 
 export function editOriginalData(data) {
-  return axios.post("/account-web/base/edit", data);
+  return axios.post("/account-web/base/edit", data).then(res => {
+    return res.data;
+  });
+}
+
+export function queryTypes(params) {
+  return axios.get('/account-web/dic/queryTypes', {
+    params,
+  }).then(res => {
+    return res.data;
+  });
 }

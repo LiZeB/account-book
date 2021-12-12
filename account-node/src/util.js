@@ -1,3 +1,5 @@
+const fs = require("fs");
+
 util = {}
 util.deletNullQuery = function(obj) {
   if(!obj) {
