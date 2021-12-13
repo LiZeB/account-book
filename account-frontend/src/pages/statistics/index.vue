@@ -30,9 +30,7 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleQuery"
-              >查询</el-button
-            >
+            <el-button type="primary" @click="handleQuery">查询</el-button>
             <el-button type="default" @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
@@ -89,8 +87,8 @@ export default {
       form: {
         personNames: [],
         statisticsTime: [
-          moment().subtract(2, "months").format("YYYY-MM-DD"),
-          moment().subtract(1, "months").format("YYYY-MM-DD"),
+          moment().subtract(2, "months").startOf("month").format("YYYY-MM-DD"),
+          moment().startOf("month").format("YYYY-MM-DD"),
         ],
       },
       rules: {},
@@ -102,8 +100,8 @@ export default {
     timeRangeProxy: {
       set(newVal) {
         this.form.statisticsTime = [
-          moment(newVal[0]).startOf("day").format("YYYY-MM-DD HH:mm:ss"),
-          moment(newVal[1]).endOf("day").format("YYYY-MM-DD HH:mm:ss"),
+          moment(newVal[0]).startOf("day").format("YYYY-MM-DD"),
+          moment(newVal[1]).endOf("day").format("YYYY-MM-DD"),
         ];
       },
       get() {
@@ -240,21 +238,27 @@ export default {
       };
       getStatisticsByGroup(data).then((res) => {
         this.statisticData = res.data.reduce((pre, cur) => {
-          const months = moment
-            .duration(
-              moment(data.statisticsTime[1]) - moment(data.statisticsTime[0])
-            )
-            .months();
+          const months =
+            moment
+              .duration(
+                moment(data.statisticsTime[1]).diff(
+                  data.statisticsTime[0],
+                  "day"
+                ),
+                "day"
+              )
+              .asDays() / 30;
           for (let i = 0; i < months; i++) {
-            const timeRange = moment(data.statisticsTime[0]);
-            const start = timeRange.add(i, "months").format("YYYY-MM");
-            const end = timeRange.add(i + 1, "months").format("YYYY-MM");
+            const timeRange1 = moment(data.statisticsTime[0]);
+            const start = timeRange1.add(i, "months").format("YYYY-MM");
+            const timeRange2 = moment(data.statisticsTime[0]);
+            const end = timeRange2.add(i + 1, "months").format("YYYY-MM");
             const key = `${start}---${end}`;
             if (!Object.prototype.hasOwnProperty.call(pre, key)) {
               pre[key] = [];
             }
             const time = cur.consumeTime.slice(0, 7);
-            if (time >= start && time <= end) {
+            if (time >= start && time < end) {
               pre[key].push(cur);
             }
           }
@@ -265,8 +269,8 @@ export default {
     handleReset() {
       this.form = {
         statisticsTime: [
+          moment().subtract(2, "months").startOf("month").format("YYYY-MM-DD"),
           moment().startOf("month").format("YYYY-MM-DD"),
-          moment().endOf("month").format("YYYY-MM-DD"),
         ],
         personNames: [],
         consumeTypes: [],

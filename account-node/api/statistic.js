@@ -9,8 +9,8 @@ router.post('/aggreateByCustomType', (req, res, next) => {
     data = util.deletNullQuery(data);
     const queryCondition = {}
     queryCondition.consumeTime = {
-        $gte: data.statisticsTime[0],
-        $lte: data.statisticsTime[1]
+        $gte: data.statisticsTime[0].slice(0, 10),
+        $lte: data.statisticsTime[1].slice(0, 10)
     };
     if (data.hasOwnProperty("personNames")) {
         const personNameCondition = data.personNames.map(item => {
@@ -46,8 +46,8 @@ router.post('/getStatistics', (req, res, next) => {
     data = util.deletNullQuery(data);
     const queryCondition = {}
     queryCondition.consumeTime = {
-        $gte: data.statisticsTime[0],
-        $lte: data.statisticsTime[1]
+        $gte: data.statisticsTime[0].slice(0, 7),
+        $lt: data.statisticsTime[1].slice(0, 7)
     };
     if (data.hasOwnProperty("personNames")) {
         const personNameCondition = data.personNames.map(item => {

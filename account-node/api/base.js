@@ -90,7 +90,7 @@ router.post("/list", (req, res, next) => {
 
   const p1 = OriginalData.find({
     ...query,
-  }).sort({consumeTime: "1"}).skip((pageNum - 1) * pageSize).limit(pageSize);
+  }).sort({consumeSum: "-1", consumeTime: "1",}).skip((pageNum - 1) * pageSize).limit(pageSize);
   const p2 = OriginalData.countDocuments({...query});
   Promise.all([p1, p2]).then((_data) => {
     const result = _data[0];
