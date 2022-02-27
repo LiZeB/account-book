@@ -12,6 +12,7 @@ export default new Router({
         {
             path: '/account-table',
             name: 'AccountTable',
+            meta: { keepAlive: true },
             component: () => import('../pages/account-table/index.vue'),
         },
         {

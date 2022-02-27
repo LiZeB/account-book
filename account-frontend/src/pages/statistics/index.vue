@@ -239,7 +239,7 @@ export default {
       getStatisticsByGroup(data).then((res) => {
         this.statisticData = res.data.reduce((pre, cur) => {
           const months =
-            moment
+            parseInt(moment
               .duration(
                 moment(data.statisticsTime[1]).diff(
                   data.statisticsTime[0],
@@ -247,7 +247,7 @@ export default {
                 ),
                 "day"
               )
-              .asDays() / 30;
+              .asDays() / 30);
           for (let i = 0; i < months; i++) {
             const timeRange1 = moment(data.statisticsTime[0]);
             const start = timeRange1.add(i, "months").format("YYYY-MM");
@@ -297,7 +297,9 @@ export default {
     box-sizing: border-box;
     overflow-y: scroll;
     > div {
-      border-bottom: 1px solid #e5e5e5;
+      &:not(:last-child) {
+        border-bottom: 1px solid #e5e5e5;
+      }
       padding: 10px 0;
       box-sizing: border-box;
       .name {

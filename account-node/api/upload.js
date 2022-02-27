@@ -129,6 +129,9 @@ class ParseData {
         if (cur === 'dealTime' && this._type === "zfb") {
           index = 10;  // 交易时间的索引
         }
+        if(cur === "sum" &&  inputArr[i][index].indexOf('¥') < 0) { // NOTE:解决解析excel时金额不能转换为Number类型的缺陷
+          inputArr[i][index] = "0"
+        }
         let prop = cur,
           descriptor = {
             value: inputArr[i][index].replace(/¥/, "").trim(),
@@ -198,7 +201,7 @@ router.post("/uploadZfb", (req, res, next) => {
       } else {
         res.send({
           type: -1,
-          msg: '该文件已上传'
+          msg: 'excel文件解析失败'
         });
       }
     });

@@ -1,14 +1,20 @@
 <template>
   <div id="app">
-    <router-view></router-view>
+    <NavBar :menu-list="menuList" class="navbar"></NavBar>
+    <keep-alive v-if="$route.meta.keepAlive">
+      <router-view></router-view>
+    </keep-alive>
+    <router-view v-if="!$route.meta.keepAlive"></router-view>
   </div>
 </template>
 
 <script>
 import { queryTypes } from "@/api/account-table.js";
+import NavBar from "@/components/navbar";
 
 export default {
   name: "App",
+  components: { NavBar },
   data() {
     return {
       dics: {
@@ -16,6 +22,11 @@ export default {
         indicatorTypes: [],
         personNames: [],
       },
+      menuList: [
+        { title: "账单管理", path: "/account-table" },
+        { title: "统计分析", path: "/statistics" },
+        { title: "账单上传", path: "/upload" }
+      ]
     };
   },
   provide() {
@@ -43,7 +54,7 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 html,
 body,
 #app {
@@ -52,6 +63,11 @@ body,
   padding: 0;
   margin: 0;
   overflow: hidden;
+  display: flex;
+  .navbar {
+    width: 300px;
+    height: 100%;
+  }
 }
 /*自定义滚动条*/
 /*外容器*/
