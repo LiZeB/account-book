@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const MongoClient = require('mongodb').MongoClient;
+const path = require('path');
+const history = require('connect-history-api-fallback');
 
 mongoose.Promise = global.Promise
 const env = process.env.NODE_ENV || 'development'
@@ -29,13 +31,16 @@ app.use(express.json()); // express.json 解析 JSON 格式的请求体数据（
 app.use(express.urlencoded());
 
 const baseRoutes = require('../api/base');
-app.use('/base', baseRoutes);
+app.use('/account-web/base', baseRoutes);
 const dicRoutes = require("../api/dic")
-app.use('/dic', dicRoutes);
+app.use('/account-web/dic', dicRoutes);
 const uploadRoutes = require("../api/upload")
-app.use('/upload', uploadRoutes);
+app.use('/account-web/upload', uploadRoutes);
 const statisticRoutes = require("../api/statistic");
-app.use('/statistic', statisticRoutes);
+app.use('/account-web/statistic', statisticRoutes);
+
+app.use(history());
+app.use(express.static(path.join(__dirname, '../dist')));
 
 app.use((err, req, res, next) => {
   if (err) {
