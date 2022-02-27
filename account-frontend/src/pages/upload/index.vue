@@ -64,7 +64,7 @@ export default {
 
 <style lang="scss">
 .upload__wrapper {
-  padding: 16px;
+  padding: 35px;
   .upload__select {
     height: 48px;
     line-height: 48px;

@@ -131,9 +131,9 @@ class Process {
             const documents = dataArr.map(doc => {
                 const dealTypeKey = doc.get('dealType');
                 const dealTypeValue = this._typeMap[dealTypeKey];
-
                 const consumerKey = doc.get('consumer');
                 const consumerValue = consumerMap[consumerKey];
+
                 const dataObj = Object.keys(OriginalDataKeys).reduce((pre, cur) => {
                     if (cur === 'isSpecial') {
                         if (customSpecialTypes.includes(dealTypeValue)) {
@@ -149,6 +149,8 @@ class Process {
                         }
                     } else if (cur === 'consumeType') {
                         pre[cur] = dealTypeValue;
+                    } else if (cur === 'source') { 
+                        pre[cur] = this._type;
                     } else {
                         pre[cur] = doc.get(this._keyNameMap[cur]);
                     }

@@ -47,9 +47,9 @@ class ParseData {
   writeStream(body) {
     return new Promise((resolve, reject) => {
       fs.exists(path.resolve(__dirname, `../../data/original-data/${this._fileName}`), fileExisted => {
-        if (fileExisted) {
-          reject();
-        } else {
+        // if (fileExisted) {
+        //   reject();
+        // } else {
           const minIndex =
             body.indexOf(this._info["Content-Type"]) +
             this._info["Content-Type"].length;
@@ -63,7 +63,7 @@ class ParseData {
           ws.write(iconv.decode(binaryData, this._encoding), "utf8");
           ws.end();
           ws.on('finish', () => { resolve(); });
-        }
+      //  }
       });
     });
   }
@@ -128,6 +128,9 @@ class ParseData {
       let one = Object.keys(dataKeys).reduce((pre, cur, index) => {
         if (cur === 'dealTime' && this._type === "zfb") {
           index = 10;  // 交易时间的索引
+        }
+        if(cur === "sum" &&  inputArr[i][index].indexOf('¥') < 0) { // NOTE:解决解析excel时金额不能转换为Number类型的缺陷
+          inputArr[i][index] = "0"
         }
         let prop = cur,
           descriptor = {

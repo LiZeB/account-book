@@ -80,14 +80,12 @@ router.post("/list", (req, res, next) => {
   delete query.pageNum;
   delete query.pageSize;
   query = util.deletNullQuery(query);
-
   if (query.hasOwnProperty("consumeTime")) {
     query.consumeTime = {
       $gte: consumeTime[0],
       $lte: consumeTime[1]
     };
   }
-
   const p1 = OriginalData.find({
     ...query,
   }).sort({consumeSum: "-1", consumeTime: "1",}).skip((pageNum - 1) * pageSize).limit(pageSize);

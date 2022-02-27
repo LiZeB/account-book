@@ -2,16 +2,14 @@ const fs = require("fs");
 
 util = {}
 util.deletNullQuery = function(obj) {
-  if(!obj) {
-    return {}
-  }
+  console.log(obj)
   const newObj = {};
   Object.keys(obj).forEach(e => {
-    if(!obj[e] ) {
+    if (obj[e] === null || obj[e] === undefined || obj[e] === '') {
       return;
     } else if(Array.isArray(obj[e]) && !obj[e].length) {
       return;
-    } else if(!Object.keys(obj[e]).length) {
+    } else if(JSON.stringify(obj[e]) === '{}') {
       return;
     }
     newObj[e] = obj[e];

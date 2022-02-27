@@ -10,7 +10,7 @@
         label-position="right"
         :inline="true"
       >
-        <el-form-item label="开销类型" prop="consumeType">
+        <el-form-item label="开销类型" prop="consumeType" content-width="85">
           <el-select v-model="form.consumeType" clearable placeholder="请选择">
             <el-option
               v-for="(label, value) in $DIC.consumeTypes"
@@ -20,16 +20,17 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="开销日期" prop="consumeTime">
+        <el-form-item label="开销日期" prop="consumeTime" label-width="85">
           <el-date-picker
             type="daterange"
             placeholder="选择日期"
             v-model="form.consumeTime"
             format="yyyy-MM-dd"
             value-format="yyyy-MM-dd"
+            :pickerOptions="pickerOptions"
           ></el-date-picker>
         </el-form-item>
-        <el-form-item label="开销人" prop="consumer">
+        <el-form-item label="开销人" prop="consumer" label-width="85">
           <el-select v-model="form.consumer" clearable placeholder="请选择">
             <el-option
               v-for="(label, value) in $DIC.personNames"
@@ -37,6 +38,12 @@
               :label="label"
               :value="value"
             ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="是否为特殊项" prop="isSpecial">
+          <el-select v-model="form.isSpecial" clearable placeholder="请选择">
+            <el-option label="是" :value="true"></el-option>
+            <el-option label="否" :value="false"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -47,7 +54,6 @@
     </div>
     <div class="account-table__operate">
       <div class="btns">
-        <el-button type="success" @click="handleExport">导入</el-button>
         <el-button type="primary" @click="handleAdd">添加</el-button>
         <el-button type="danger" @click="handleMultiDelete">刪除</el-button>
       </div>
@@ -135,7 +141,7 @@
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="开销人" prop="consumer">
-           <el-select v-model="addForm.consumer" clearable placeholder="请选择">
+          <el-select v-model="addForm.consumer" clearable placeholder="请选择">
             <el-option
               v-for="(label, value) in $DIC.personNames"
               :key="value"
@@ -172,7 +178,6 @@ import {
   deleteOriginalData,
   editOriginalData,
 } from "@/api/account-table.js";
-import moment from "moment";
 const _ = require("lodash");
 
 const tableColumns = [
@@ -182,6 +187,7 @@ const tableColumns = [
   { label: "开销日期", value: "consumeTime", width: "180" },
   { label: "开销人", value: "consumer", width: "120" },
   { label: "是否为特殊项", value: "isSpecial", width: "120" },
+  { label: "来源", value: "source", width: "80" },
   { label: "备注", value: "remark" },
 ];
 
@@ -196,6 +202,8 @@ export default {
         return vm.$DIC["consumeTypes"][value];
       } else if (prop === "consumer" && value) {
         return vm.$DIC["personNames"][value];
+      } else if (prop === "source" && value) {
+        return value === "wx" ? "微信" : "支付宝";
       }
       return value;
     },
@@ -211,13 +219,9 @@ export default {
       dialogVisible: false,
       form: {
         consumeType: "",
-        consumeTime: [
-          moment(`${moment().format("YYYY-MM")}-10`)
-            .subtract(1, "months")
-            .format("YYYY-MM-DD"),
-          moment(`${moment().format("YYYY-MM")}-10`).format("YYYY-MM-DD"),
-        ],
+        consumeTime: [],
         consumer: "",
+        isSpecial: "",
       },
       addForm: {
         consumeType: "",
@@ -232,6 +236,37 @@ export default {
       addRules: {},
       dialogTitle: "添加",
       selections: [],
+      pickerOptions: {
+        shortcuts: [
+          {
+            text: "最近一周",
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+              picker.$emit("pick", [start, end]);
+            },
+          },
+          {
+            text: "最近一个月",
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+              picker.$emit("pick", [start, end]);
+            },
+          },
+          {
+            text: "最近三个月",
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+              picker.$emit("pick", [start, end]);
+            },
+          },
+        ],
+      },
     };
   },
   mounted() {
@@ -246,13 +281,9 @@ export default {
     handleReset() {
       this.form = {
         consumeType: "",
-        consumeTime: [
-          moment(`${moment().format("YYYY-MM")}-10`)
-            .subtract(1, "months")
-            .format("YYYY-MM-DD"),
-          moment(`${moment().format("YYYY-MM")}-10`).format("YYYY-MM-DD"),
-        ],
+        consumeTime: [],
         consumer: "",
+        isSpecial: "",
       };
       this.pageNum = 1;
       this.pageSize = 20;
@@ -358,9 +389,6 @@ export default {
           console.log(err);
         });
     },
-    handleExport() {
-      this.$router.push({path: "/upload"});
-    },
   },
 };
 </script>
@@ -371,7 +399,7 @@ export default {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 16px 32px;
+  padding: 20px 15px;
   .account-table__operate {
     width: 100%;
     height: 64px;
