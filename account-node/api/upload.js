@@ -47,9 +47,9 @@ class ParseData {
   writeStream(body) {
     return new Promise((resolve, reject) => {
       fs.exists(path.resolve(__dirname, `../../data/original-data/${this._fileName}`), fileExisted => {
-        // if (fileExisted) {
-        //   reject();
-        // } else {
+        if (fileExisted) {
+          reject();
+        } else {
           const minIndex =
             body.indexOf(this._info["Content-Type"]) +
             this._info["Content-Type"].length;
@@ -63,7 +63,7 @@ class ParseData {
           ws.write(iconv.decode(binaryData, this._encoding), "utf8");
           ws.end();
           ws.on('finish', () => { resolve(); });
-      //  }
+        }
       });
     });
   }
@@ -201,7 +201,7 @@ router.post("/uploadZfb", (req, res, next) => {
       } else {
         res.send({
           type: -1,
-          msg: '该文件已上传'
+          msg: 'excel文件解析失败'
         });
       }
     });
