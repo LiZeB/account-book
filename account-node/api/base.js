@@ -77,8 +77,10 @@ router.post("/list", (req, res, next) => {
   const pageNum = query.pageNum;
   const pageSize = query.pageSize;
   const consumeTime = query.consumeTime
+  const sortOrder = query.sortOrder
   delete query.pageNum;
   delete query.pageSize;
+  delete query.sortOrder;
   query = util.deletNullQuery(query);
   if (query.hasOwnProperty("consumeTime")) {
     query.consumeTime = {
@@ -86,9 +88,10 @@ router.post("/list", (req, res, next) => {
       $lte: consumeTime[1]
     };
   }
+
   const p1 = OriginalData.find({
     ...query,
-  }).sort({consumeSum: "-1", consumeTime: "1",}).skip((pageNum - 1) * pageSize).limit(pageSize);
+  }).sort({...sortOrder}).skip((pageNum - 1) * pageSize).limit(pageSize);
   const p2 = OriginalData.countDocuments({...query});
   Promise.all([p1, p2]).then((_data) => {
     const result = _data[0];

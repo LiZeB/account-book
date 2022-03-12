@@ -1,8 +1,5 @@
-const fs = require("fs");
-
 util = {}
 util.deletNullQuery = function(obj) {
-  console.log(obj)
   const newObj = {};
   Object.keys(obj).forEach(e => {
     if (obj[e] === null || obj[e] === undefined || obj[e] === '') {

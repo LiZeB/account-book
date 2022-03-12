@@ -60,11 +60,13 @@
     </div>
     <div class="account-table__container">
       <el-table
+        ref='table'
         :data="accountData"
         border
         height="100%"
         max-height="100%"
         @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange"
       >
         <el-table-column type="selection"></el-table-column>
         <el-table-column type="index" label="序号" width="80"></el-table-column>
@@ -183,8 +185,8 @@ const _ = require("lodash");
 const tableColumns = [
   { label: "开销类型", value: "consumeType", width: "120" },
   { label: "开销名称", value: "consumeName", width: "200" },
-  { label: "开销金额（元）", value: "consumeSum", width: "120" },
-  { label: "开销日期", value: "consumeTime", width: "180" },
+  { label: "开销金额（元）", value: "consumeSum", width: "160", sortable: "custom" },
+  { label: "开销日期", value: "consumeTime", width: "180", sortable: "custom" },
   { label: "开销人", value: "consumer", width: "120" },
   { label: "是否为特殊项", value: "isSpecial", width: "120" },
   { label: "来源", value: "source", width: "80" },
@@ -236,6 +238,7 @@ export default {
       addRules: {},
       dialogTitle: "添加",
       selections: [],
+      sortOrder: {},
       pickerOptions: {
         shortcuts: [
           {
@@ -273,6 +276,11 @@ export default {
     this.getAccountData();
   },
   methods: {
+    handleSortChange({ prop, order }) {
+      // order: 'ascending', 'descending'
+      this.sortOrder[prop] = order === 'ascending' ? '1' : '-1';
+      this.getAccountData();
+    },
     handleQuery() {
       this.pageSize = 20;
       this.pageNum = 1;
@@ -285,6 +293,8 @@ export default {
         consumer: "",
         isSpecial: "",
       };
+      this.sortOrder = {};
+      this.$refs.table.clearSort();
       this.pageNum = 1;
       this.pageSize = 20;
       this.getAccountData();
@@ -379,6 +389,7 @@ export default {
         pageNum: this.pageNum,
         pageSize: this.pageSize,
         ...this.form,
+        sortOrder: this.sortOrder
       };
       queryOriginalData(params)
         .then((res) => {
