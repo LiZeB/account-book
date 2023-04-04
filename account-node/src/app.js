@@ -28,13 +28,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded());
 const baseRoutes = require('../api/base');
-app.use('/account-web/base', baseRoutes);
+app.use('/base', baseRoutes);
 const dicRoutes = require("../api/dic")
-app.use('/account-web/dic', dicRoutes);
+app.use('/dic', dicRoutes);
 const uploadRoutes = require("../api/upload")
-app.use('/account-web/upload', uploadRoutes);
+app.use('/upload', uploadRoutes);
 const statisticRoutes = require("../api/statistic");
-app.use('/account-web/statistic', statisticRoutes);
+app.use('/statistic', statisticRoutes);
 app.use(history()); // 解决由于history模式下前端路由存在导致后台无法匹配到某个text/html,返回404的问题。不匹配时，强行指向 index.html
 app.use(express.static(path.join(__dirname, '../dist')));
 

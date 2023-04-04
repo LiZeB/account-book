@@ -21,6 +21,8 @@
   pm2 start
 
 ## 4. 应用截图
+链接：http://175.27.235.19/account-web/
+
 ![账单管理-查询](./data/images/%E8%B4%A6%E5%8D%95%E7%AE%A1%E7%90%86-%E6%9F%A5%E8%AF%A2.png)
 
 ![账单管理-添加](./data/images/%E8%B4%A6%E5%8D%95%E7%AE%A1%E7%90%86-%E6%B7%BB%E5%8A%A0.png)

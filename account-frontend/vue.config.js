@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+  publicPath: '/account-web',
   configureWebpack: {
     resolve: {
       alias: {
